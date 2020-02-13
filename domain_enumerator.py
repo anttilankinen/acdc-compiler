@@ -155,6 +155,15 @@ def enumerate_domains(species_list):
 species = create_species(A)
 ss1 = species[1].state_strand
 added_domains = enumerate_domains(species)
+
+for s in species:
+    print(s.state_strand)
+    print(s.id_strand[::-1])
+    try:
+        print(s.active_state_strand)
+    except:
+        pass
+    print('')
     
     
             
