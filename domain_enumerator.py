@@ -12,8 +12,8 @@ import igraph
 class Species:
 
     def initialise_strands(self):
-        if len(self.activate_u) > 0 or len(self.repress_u) > 0:
-            self.active_state_strand = ['0'] * 5
+        
+        self.active_state_strand = ['0'] * 5
         self.state_strand = ['0'] * 5
         self.id_strand = ['0'] * 5
     
@@ -27,53 +27,61 @@ class Species:
             id_compl = any(['*' in d for d in self.id_strand])
             
         # first fill out stuff based on neighbours
-        if hasattr(self, 'active_state_strand'):
-            if self.active_state_strand[0] == '0':
-                self.active_state_strand[0] = label(domain_counter,
-                                                    not(id_compl))
-            if self.active_state_strand[1] != '0':
-                self.state_strand[1] = self.active_state_strand[1]
-            elif self.state_strand[1] != '0':
-                self.active_state_strand[1] = self.state_strand[1]
+        inherit_active = sum([d != '0' for d in self.active_state_strand]) > \
+        sum([d != '0' for d in self.state_strand])
         
-            if self.active_state_strand[2] != '0':
-                self.state_strand[2] = \
-                switch_state_central_domain(self.active_state_strand[2]) 
-            elif self.state_strand[2] != '0':
-                self.active_state_strand[2] = \
-                switch_state_central_domain(self.state_strand[2]) 
-            if self.active_state_strand[3] != '0':
-                self.state_strand[3] = self.active_state_strand[3]  
-            elif self.state_strand[3] != '0':
-                self.active_state_strand[3] = self.state_strand[3]
-            print(self.active_state_strand)
-            print(self.state_strand)
-            if self.active_state_strand[4] != '0':
-                if '*' in self.active_state_strand[4]:
-                    self.state_strand[4] = self.active_state_strand[4][:-2] +\
-                    self.active_state_strand[4][-1]
+        if inherit_active:
+            for i, d in enumerate(self.active_state_strand):
+                if d == '0':
+                    self.active_state_strand[i] = \
+                    label(domain_counter, not(id_compl))
+                    domain_counter += 1
+            if len(self.activate_u) == 0 and len(self.repress_u) == 0:
+                self.state_strand = self.active_state_strand
+            else:
+                self.state_strand[1:] = self.active_state_strand[1:]
+                self.state_strand[0] = label(domain_counter, not(id_compl))
+                domain_counter += 1
+            if not '2' in self.state_strand[4]:
+                if id_compl:
+                    self.state_strand[4] += '2'
                 else:
-                    self.state_strand[4] = self.active_state_strand[4][:-1]
-            elif self.state_strand[4] != '0':
-                if '*' in self.state_strand[4]:
-                    self.active_state_strand[4] = self.state_strand[4][:-1] +\
-                    '2*'
+                    self.state_strand[4] = \
+                    self.state_strand[4][:-1] + '2*'
+            
+                    
+        else:
+            for i, d in enumerate(self.state_strand):
+                if d == '0':
+                    self.state_strand[i] = \
+                    label(domain_counter, not(id_compl))
+                    domain_counter += 1
+            if len(self.activate_u) == 0 and len(self.repress_u) == 0:
+                self.active_state_strand = self.state_strand
+            else:
+                self.active_state_strand[1:] = self.state_strand[1:]
+                self.active_state_strand[0] = \
+                label(domain_counter, not(id_compl))
+                domain_counter += 1      
+            if not '2' in self.active_state_strand[4]:
+                if id_compl:
+                    self.active_state_strand[4] += '2'
                 else:
-                    self.active_state_strand[4] = self.state_strand[4] + '2'
+                    self.active_state_strand[4] = \
+                    self.active_state_strand[4][:-1] + '2*'
                 
             
             
-        for i, d in enumerate(self.state_strand):
-            if d == '0':
-                self.state_strand[i] =  label(domain_counter, not(id_compl))
-                if i == 2:
-                    self.state_strand[2] += '1'
-                domain_counter += 1
-        self.id_strand[1] = complement(self.state_strand[3])
-        self.id_strand[3] = complement(self.state_strand[1])
+        #for i, d in enumerate(self.state_strand):
+         #   if d == '0':
+          #      self.state_strand[i] =  label(domain_counter, not(id_compl))
+                #if i == 2:
+                #    self.state_strand[2] += '1'
+           #     domain_counter += 1"""
+        self.id_strand[1:4] = complement(self.state_strand[3:0:-1])
         
-        if self.id_strand[2] == '0':
-            self.id_strand[2] = 'c2*'
+        #if self.id_strand[2] == '0':
+        #   self.id_strand[2] = 'c2*'
         for i in [0,4]:
             if self.id_strand[i] == '0':
                 self.id_strand[i] = label(domain_counter, id_compl)
@@ -91,70 +99,39 @@ class Species:
         # first downstream neighbours
         for s in self.activate_d:
             if not any([d == '0' for d in s.state_strand[4:1:-1]]):
-                try:
-                    self.active_state_strand[0:3] = \
-                    complement(s.state_strand[4:1:-1],
-                               switch_central=False)
-                    self.id_strand[4:1:-1] = complement(s.id_strand[0:3],
-                                  switch_central=True)
-                    break
-                except:
-                    self.state_strand[0:3] = \
-                    complement(s.state_strand[4:1:-1],
-                               switch_central=False)
-                    self.id_strand[4:1:-1] = complement(s.id_strand[0:3],
-                                  switch_central=True)
-                    break
+                self.active_state_strand[0:3] = \
+                complement(s.state_strand[4:1:-1],
+                           switch_central=False)
+                self.id_strand[4] = complement(s.id_strand[0],
+                              switch_central=False)
+                break
         for s in self.repress_d:
             if not any([d == '0' for d in s.active_state_strand[4:1:-1]]):
-                try:
-                    self.active_state_strand[0:3] = \
-                    complement(s.active_state_strand[4:1:-1],
-                               switch_central=False)
-                    self.id_strand[4:1:-1] = complement(s.id_strand[0:3],
-                                  switch_central=True)
-                    break
-                except:
-                    self.state_strand[0:3] = \
-                    complement(s.active_state_strand[4:1:-1],
-                               switch_central=False)
-                    self.id_strand[4:1:-1] = complement(s.id_strand[0:3],
-                                  switch_central=True)
+                self.active_state_strand[0:3] = \
+                complement(s.active_state_strand[4:1:-1],
+                           switch_central=False)
+                self.id_strand[4] = complement(s.id_strand[0],
+                              switch_central=False)
+                break
+
         # then upstream neighbours
         for s in self.activate_u:
-            try:
-                if not any([d == '0' for d in s.active_state_strand[0:3]]):
-                    self.state_strand[4:1:-1] = \
-                        complement(s.active_state_strand[0:3],
-                                   switch_central=False)
-                    self.id_strand[0:3] = complement(s.id_strand[4:1:-1],
-                                  switch_central=True)
-                    break
-            except:
-                if not any([d == '0' for d in s.state_strand[0:3]]):
-                    self.state_strand[4:1:-1] = \
-                        complement(s.state_strand[0:3],
-                                   switch_central=False)
-                    self.id_strand[0:3] = complement(s.id_strand[4:1:-1],
-                                  switch_central=True)
-                    break
+            if not any([d == '0' for d in s.active_state_strand[0:3]]):
+                self.state_strand[4:1:-1] = \
+                complement(s.active_state_strand[0:3],
+                           switch_central=False)
+                self.id_strand[0] = complement(s.id_strand[4],
+                              switch_central=False)
+                break
         for s in self.repress_u:
-            try:
-                if not any([d == '0' for d in s.active_state_strand[0:3]]):
-                    self.active_state_strand[4:1:-1] = \
-                        complement(s.active_state_strand[0:3],
-                                   switch_central=False)
-                    self.id_strand[0:3] = complement(s.id_strand[4:1:-1],
-                                  switch_central=True)
-                    break
-            except:
-                if not any([d == '0' for d in s.state_strand[0:3]]):
-                    self.active_state_strand[4:1:-1] = \
-                        complement(s.state_strand[0:3],
-                                   switch_central=False)
-                    self.id_strand[0:3] = complement(s.id_strand[4:1:-1],
-                                  switch_central=True)
-                    break
+            if not any([d == '0' for d in s.active_state_strand[0:3]]):
+                self.active_state_strand[4:1:-1] = \
+                complement(s.active_state_strand[0:3],
+                           switch_central=False)
+                self.id_strand[0] = complement(s.id_strand[4],
+                              switch_central=False)
+                break
+
         
         
         
@@ -200,8 +177,8 @@ def central_complement(d):
         
 def switch_state_central_domain(d):        
     return complement(central_complement(d), switch_central=False)
-A = np.array([[0, 1,0 ],[0,0, 1], [0, 0, 0]])
-g = igraph.Graph.Adjacency((A > 0).tolist())
+A = np.array([[0, -1,0 ],[0,0, -1], [0, 0, 0]])
+g = igraph.Graph.Adjacency((A != 0).tolist())
 
 # Add edge weights and node labels.
 g.es['weight'] = A[A.nonzero()]    
@@ -237,7 +214,6 @@ def enumerate_domains(species_list):
 
     for _ in range(len(not_enumerated)):
         i = smallest_common(not_enumerated, neighbourhood)
-        print('Now filling species %d' % i)
         species_list[i].fill_complementary_domains()
         domain_counter = species_list[i].fill_domains(domain_counter)
         not_enumerated = np.delete(not_enumerated,
@@ -249,8 +225,13 @@ def enumerate_domains(species_list):
     return species_list
         
 species = create_species(A)
-ss1 = species[1].state_strand
 added_domains = enumerate_domains(species)
+
+for s in species:
+    print(s.state_strand)
+    print(s.id_strand[::-1])
+    print(s.active_state_strand)
+    print('')
     
     
             
