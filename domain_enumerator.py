@@ -29,6 +29,7 @@ class Species:
         # first fill out stuff based on neighbours
         inherit_active = sum([d != '0' for d in self.active_state_strand]) > \
         sum([d != '0' for d in self.state_strand])
+        print(inherit_active)
         
         if inherit_active:
             for i, d in enumerate(self.active_state_strand):
@@ -40,6 +41,8 @@ class Species:
                 self.state_strand = self.active_state_strand
             else:
                 self.state_strand[1:] = self.active_state_strand[1:]
+                self.state_strand[2] = \
+                swap_central(self.active_state_strand[2])
                 self.state_strand[0] = label(domain_counter, not(id_compl))
                 domain_counter += 1
             if not '2' in self.state_strand[4]:
@@ -56,10 +59,14 @@ class Species:
                     self.state_strand[i] = \
                     label(domain_counter, not(id_compl))
                     domain_counter += 1
+                    if i == 2 and domain_counter == 3:
+                        self.state_strand[2] = 'c1'
             if len(self.activate_u) == 0 and len(self.repress_u) == 0:
                 self.active_state_strand = self.state_strand
             else:
                 self.active_state_strand[1:] = self.state_strand[1:]
+                self.active_state_strand[2] = \
+                swap_central(self.state_strand[2])
                 self.active_state_strand[0] = \
                 label(domain_counter, not(id_compl))
                 domain_counter += 1      
@@ -79,6 +86,7 @@ class Species:
                 #    self.state_strand[2] += '1'
            #     domain_counter += 1"""
         self.id_strand[1:4] = complement(self.state_strand[3:0:-1])
+        self.id_strand[2] = 'c*' if id_compl else 'c'
         
         #if self.id_strand[2] == '0':
         #   self.id_strand[2] = 'c2*'
@@ -177,7 +185,7 @@ def central_complement(d):
         
 def switch_state_central_domain(d):        
     return complement(central_complement(d), switch_central=False)
-A = np.array([[0, -1,0 ],[0,0, -1], [0, 0, 0]])
+A = np.array([[0, 1,0 ],[0,0, 1], [0, 0, 0]])
 g = igraph.Graph.Adjacency((A != 0).tolist())
 
 # Add edge weights and node labels.
@@ -205,8 +213,38 @@ def smallest_common(l1, l2):
         if k in l2:
             return k
         
+def circle_forward(d):
+    if len(d) == 3: # contains "*"
+        if int(d[1]) < 3:
+            return 'c' + str(int(d[1]) + 1)
+        else:
+            return 'c1'
+    else:
+        if int(d[1]) < 3:
+            return 'c' + str(int(d[1]) + 1) + '*'
+        else:
+            return 'c1*'
+
+def circle_backward(d):
+    if len(d) == 3: # contains "*"
+        if int(d[1]) > 1:
+            return 'c' + str(int(d[1]) - 1)
+        else:
+            return 'c3'
+    else:
+        if int(d[1]) > 1:
+            return 'c' + str(int(d[1]) - 1) + '*'
+        else:
+            return 'c3*'
+        
+def swap_central(d):
+    print(d)
+    if len(d) == 3:
+        return d[0] + str(3 - int(d[1])) + d[2]
+    else:
+        return d[0] + str(3 - int(d[1]))
     
-def enumerate_domains(species_list):
+def enumerate_domains(species_list, g):
     domain_counter = 0
     not_enumerated = np.arange(1, len(species_list))
     domain_counter += species_list[0].fill_domains(domain_counter)
@@ -223,15 +261,85 @@ def enumerate_domains(species_list):
         neighbourhood.sort()
     
     return species_list
+
+def unique(l1, l2):
+    unique_list = []
+    for item in l1:
+        if not item in unique_list:
+            unique_list.append(item)
+    for item in l2:
+        if not item in unique_list:
+            unique_list.append(item)
+    return unique_list
+    
+
+def make_chains(species_list):
+    chains = []
+    for s in species_list:
+        print('\n')
+        print(chains)
+        # if any of downstream repress active state strand is in any chain:
+        # add self.active_state_strand to that chain
+        # if any downstream activate passive state strand is in any chain:
+        # add self.active_state_strand to that chain
+        # if any upstream repressor active state strand is in any chain:
+        # add self.active_state_strand to that chain
+        as_neighbours = [k.active_state_strand
+                                   for k in
+                                   s.repress_d + s.repress_u] + \
+                                  [k.state_strand for k in s.activate_d]
+        chains = [c + [s.active_state_strand] if
+                  any([a in c for a in as_neighbours]) else c
+                  for c in chains]
+        print()
+        print(chains)
+        
+        if not any([s.active_state_strand in c for c in chains]):
+            chains.append([s.active_state_strand])
+        print()
+        print(chains)
+        # if any upstream activator active state strand is in any chain:
+        # add self.state_strand to that chain
+        ps_neighbours = [k.active_state_strand
+                               for k in s.activate_u]
+        
+        chains = [c + [s.state_strand] if
+                  any([p in c for p in ps_neighbours]) else c
+                  for c in chains]
+        print()
+        print(chains)
+        if not any([s.state_strand in c for c in chains]):
+            chains.append([s.state_strand])
+        print()
+        print(chains)
+
+
+        new_chains = []
+        merged = []
+        for i in range(len(chains)):
+            for j in range(i+1, len(chains)):
+                if len(chains[i]) + len(chains[j]) > \
+                len(unique(chains[i],chains[j])) and not j in merged:
+                    # overlap between chains, merge them
+                    chains[i] = unique(chains[i], chains[j])
+                    merged.append(j)
+            new_chains.append(chains[i])
+        chains = new_chains
+        
+    return chains
+        
+                    
         
 species = create_species(A)
-added_domains = enumerate_domains(species)
+added_domains = enumerate_domains(species, g)
 
-for s in species:
-    print(s.state_strand)
-    print(s.id_strand[::-1])
-    print(s.active_state_strand)
-    print('')
+#for s in species:
+#    print(s.state_strand)
+#    print(s.id_strand[::-1])
+#    print(s.active_state_strand)
+#    print('')
+    
+chains = make_chains(species)
     
     
             
