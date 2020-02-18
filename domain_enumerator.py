@@ -29,7 +29,6 @@ class Species:
         # first fill out stuff based on neighbours
         inherit_active = sum([d != '0' for d in self.active_state_strand]) > \
         sum([d != '0' for d in self.state_strand])
-        print(inherit_active)
         
         if inherit_active:
             for i, d in enumerate(self.active_state_strand):
@@ -41,8 +40,8 @@ class Species:
                 self.state_strand = self.active_state_strand
             else:
                 self.state_strand[1:] = self.active_state_strand[1:]
-                self.state_strand[2] = \
-                swap_central(self.active_state_strand[2])
+                #self.state_strand[2] = \
+                #swap_central(self.active_state_strand[2])
                 self.state_strand[0] = label(domain_counter, not(id_compl))
                 domain_counter += 1
             if not '2' in self.state_strand[4]:
@@ -59,14 +58,14 @@ class Species:
                     self.state_strand[i] = \
                     label(domain_counter, not(id_compl))
                     domain_counter += 1
-                    if i == 2 and domain_counter == 3:
-                        self.state_strand[2] = 'c1'
+                    #if i == 2 and domain_counter == 3:
+                    #    self.state_strand[2] = 'c1'
             if len(self.activate_u) == 0 and len(self.repress_u) == 0:
                 self.active_state_strand = self.state_strand
             else:
                 self.active_state_strand[1:] = self.state_strand[1:]
-                self.active_state_strand[2] = \
-                swap_central(self.state_strand[2])
+                #self.active_state_strand[2] = \
+                #swap_central(self.state_strand[2])
                 self.active_state_strand[0] = \
                 label(domain_counter, not(id_compl))
                 domain_counter += 1      
@@ -184,12 +183,7 @@ def central_complement(d):
         return d + '*'
         
 def switch_state_central_domain(d):        
-    return complement(central_complement(d), switch_central=False)
-A = np.array([[0, 1,0 ],[0,0, 1], [0, 0, 0]])
-g = igraph.Graph.Adjacency((A != 0).tolist())
-
-# Add edge weights and node labels.
-g.es['weight'] = A[A.nonzero()]    
+    return complement(central_complement(d), switch_central=False)  
 
 def create_species(A):
     # create species from adjacency matrix A
@@ -275,9 +269,8 @@ def unique(l1, l2):
 
 def make_chains(species_list):
     chains = []
-    for s in species_list:
-        print('\n')
-        print(chains)
+    members = []
+    for l, s in enumerate(species_list):
         # if any of downstream repress active state strand is in any chain:
         # add self.active_state_strand to that chain
         # if any downstream activate passive state strand is in any chain:
@@ -291,13 +284,13 @@ def make_chains(species_list):
         chains = [c + [s.active_state_strand] if
                   any([a in c for a in as_neighbours]) else c
                   for c in chains]
-        print()
-        print(chains)
+        members = [members[i] + [l] if
+                  any([a in chains[i] for a in as_neighbours]) else members[i]
+                  for i in range(len(members))]
         
         if not any([s.active_state_strand in c for c in chains]):
             chains.append([s.active_state_strand])
-        print()
-        print(chains)
+            members.append([l])
         # if any upstream activator active state strand is in any chain:
         # add self.state_strand to that chain
         ps_neighbours = [k.active_state_strand
@@ -306,15 +299,16 @@ def make_chains(species_list):
         chains = [c + [s.state_strand] if
                   any([p in c for p in ps_neighbours]) else c
                   for c in chains]
-        print()
-        print(chains)
+        members = [members[i] + [l] if
+                  any([p in chains[i] for p in ps_neighbours]) else members[i]
+                  for i in range(len(members))]
         if not any([s.state_strand in c for c in chains]):
             chains.append([s.state_strand])
-        print()
-        print(chains)
+            members.append([l])
 
 
         new_chains = []
+        new_members = []
         merged = []
         for i in range(len(chains)):
             for j in range(i+1, len(chains)):
@@ -322,24 +316,115 @@ def make_chains(species_list):
                 len(unique(chains[i],chains[j])) and not j in merged:
                     # overlap between chains, merge them
                     chains[i] = unique(chains[i], chains[j])
+                    members[i] = unique(members[i], members[j])
                     merged.append(j)
             new_chains.append(chains[i])
+            new_members.append(members[i])
         chains = new_chains
+        members = new_members
         
-    return chains
+    return chains, members
+
+def move_to_centre(l, i):
+    # move i to centre of list l
+    l[l.index(i)] = l[1]
+    l[1] = i
+    return l
+
+def suitable_domains(l):
+    # return all numbers 1,2,3 that aren't on list l
+    return [i for i in [2, 3, 4] if i not in l]
+
+
+def allocate_central_domains(chains, members):
+    differ_pairs = [[i for i in range(len(members)) if j in members[i]]
+    for j in range(len(species))]
+    differ_pairs = [pair for pair in differ_pairs if len(pair) == 2]
+    # these have to be made such that the one that the one in focus
+    # is in the middle
+    if len(differ_pairs) == 1:
+        # there's only two chains, so just set them to be different and you're
+        # good
+        for i in range(2):
+            for strand in chains[i]:
+                if '*' in strand[2]:
+                    strand[2] = 'c' + str(i+1) + '*'
+                else:
+                    strand[2] = 'c' + str(i+1)
+    else:
         
-                    
+        triplets = []
+        for c in range(len(chains)):
+            for i in range(len(differ_pairs)):
+                for j in range(i+1, len(differ_pairs)):
+                    if c in differ_pairs[i] and c in differ_pairs[j]:
+                        triplets.append(
+                                move_to_centre(
+                                        unique(
+                                                differ_pairs[i],
+                                                differ_pairs[j]),
+                                                c))
+        for triplet in triplets:
+            triplet_central_domains = [chains[chain][0][2]
+            for chain in triplet]
+            # ok
+            allocated_numbers = [-1] * 3
+            for i in range(3):
+                t = triplet_central_domains[i]
+                if len(t) > 1:
+                    if t[1] != '*':
+                        allocated_numbers[i] = int(t[1])
+            new_domains = suitable_domains([a for a in allocated_numbers
+                                            if a != -1])
+            if len(new_domains):
+                # not all three 
+                if any([a == -1 for a in allocated_numbers]):
+                    # something's empty, fill in with new domains
+                    for d in new_domains:
+                        try:
+                            allocated_numbers[allocated_numbers.index(-1)] = d
+                        except:
+                            pass
+        
+                if allocated_numbers[1] == allocated_numbers[0] or \
+                allocated_numbers[1] == allocated_numbers[2] and \
+                allocated_numbers[1] != -1:
+                    allocated_numbers[1] = new_domains[0]
+        
+            # then set the chains accordingly
+            for i in range(3):
+                for strand in chains[triplet[i]]:
+                    if '*' in strand[2]:
+                        strand[2] = 'c' + str(allocated_numbers[i]) + '*'
+                    else:
+                        strand[2] = 'c' + str(allocated_numbers[i])
+    
+        
+        
+A = np.array([[0, 1, 0, 0],
+              [0, 0, 1, 0],
+              [0, 0, 0, 1],
+              [0, 0, 0, 0]])
+A = A[0:2, 0:2]
+g = igraph.Graph.Adjacency((A != 0).tolist())
+
+# Add edge weights and node labels.
+g.es['weight'] = A[A.nonzero()]   
         
 species = create_species(A)
 added_domains = enumerate_domains(species, g)
 
-#for s in species:
-#    print(s.state_strand)
-#    print(s.id_strand[::-1])
-#    print(s.active_state_strand)
-#    print('')
     
-chains = make_chains(species)
+chains, members = make_chains(species)
+allocate_central_domains(chains, members)
+
+for s in species:
+    print('State: ', s.state_strand)
+    print('ID: ', s.id_strand[::-1])
+    print('Active: ', s.active_state_strand)
+    print('')
+
+
     
     
             
