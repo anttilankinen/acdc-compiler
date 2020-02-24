@@ -320,7 +320,6 @@ def allocate_central_domains(chains, members, species):
                         allocated_numbers[i] = int(t[1])
             new_domains = suitable_domains([a for a in allocated_numbers
                                             if a != -1])
-            print(new_domains)
             if len(new_domains):
                 # not all three 
                 if any([a == -1 for a in allocated_numbers]):
