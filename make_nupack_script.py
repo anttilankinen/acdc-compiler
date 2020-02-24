@@ -159,47 +159,47 @@ def design_script(species_list, central_mismatch, stop):
                            
                     
                 # force toehold C-C mismatch
-            elif '2' in d and d[0] in domains:
+            elif '2' in d and d[:-1] in domains:
                 for s in species_list:
-                    if d[0] in s.active_state_strand[0]:
-                        if s.active_state_strand[0] == d[0]:
+                    if d[:-1] in s.active_state_strand[0]:
+                        if s.active_state_strand[0] == d[:-1]:
                             # no invert, d[0] C
-                            f.write('domain %s = N4C\n' % d[0])
+                            f.write('domain %s = N4C\n' % d[:-1])
                             f.write('domain %s = N4G\n' % d)
                             break
                         elif s.active_state_strand[0] == d:
                             # no invert, d[0] G
-                            f.write('domain %s = N4G\n' % d[0])
+                            f.write('domain %s = N4G\n' % d[:-1])
                             f.write('domain %s = N4C\n' % d)
                             break
-                        elif s.active_state_strand[0] == d[0] + '*':
+                        elif s.active_state_strand[0] == d[:-1] + '*':
                             # invert, d[0] G
-                            f.write('domain %s = GN4\n' % d[0])
+                            f.write('domain %s = GN4\n' % d[:-1])
                             f.write('domain %s = CN4\n' % d)
                             break
                         elif s.active_state_strand[0] == d + '*':
-                            f.write('domain %s = CN4\n' % d[0])
+                            f.write('domain %s = CN4\n' % d[:-1])
                             f.write('domain %s = GN4\n' % d)
                             break
                         break
-                    elif d[0] in s.active_state_strand[4]:
-                        if s.active_state_strand[4] == d[0]:
+                    elif d[:-1] in s.active_state_strand[4]:
+                        if s.active_state_strand[4] == d[:-1]:
                             # no invert, d[0] C
-                            f.write('domain %s = CN4\n' % d[0])
+                            f.write('domain %s = CN4\n' % d[:-1])
                             f.write('domain %s = GN4\n' % d)
                             break
                         elif s.active_state_strand[4] == d:
                             # no invert, d[0] G
-                            f.write('domain %s = GN4\n' % d[0])
+                            f.write('domain %s = GN4\n' % d[:-1])
                             f.write('domain %s = CN4\n' % d)
                             break
-                        elif s.active_state_strand[4] == d[0] + '*':
+                        elif s.active_state_strand[4] == d[:-1] + '*':
                             # invert, d[0] G
-                            f.write('domain %s = N4G\n' % d[0])
+                            f.write('domain %s = N4G\n' % d[:-1])
                             f.write('domain %s = N4C\n' % d)
                             break
                         elif s.active_state_strand[4] == d + '*':
-                            f.write('domain %s = N4C\n' % d[0])
+                            f.write('domain %s = N4C\n' % d[:-1])
                             f.write('domain %s = N4G\n' % d)
                             break
                         break
