@@ -296,7 +296,7 @@ def allocate_central_domains(chains, members, species):
                 else:
                     strand[2] = 'c' + str(i+2)
     else:
-        
+        print(chains)
         triplets = []
         for c in range(len(chains)):
             for i in range(len(differ_pairs)):
@@ -306,8 +306,9 @@ def allocate_central_domains(chains, members, species):
                                 move_to_centre(
                                         unique(
                                                 differ_pairs[i],
-                                                differ_pairs[j]),
-                                                c))
+                                                differ_pairs[j]), c))
+        triplets = [t for t in triplets if len(t) == 3]
+                    
         for triplet in triplets:
             triplet_central_domains = [chains[chain][0][2]
             for chain in triplet]
