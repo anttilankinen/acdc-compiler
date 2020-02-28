@@ -19,14 +19,14 @@ def get_args():
     return parser.parse_args()
 
 
-args = get_args()
-A, g, names = text2graph(args.input) # adjacency matrix, graph, names of nodes
+#args = get_args()
+A, g, names = text2graph('testgraph2.txt') # adjacency matrix, graph, names of nodes
 result, error = is_valid(g)
 if result:
     # YAY!
-    species = make_domains(A, g, names, central_mismatch=args.central)
-    design_script(species, central_mismatch=args.central, stop=args.stop)
-    if args.nupack:
+    species = make_domains(A, g, names, central_mismatch=True)
+    design_script(species, central_mismatch=True, stop=5)
+    if True:
         if os.path.isfile('design_0.npo'):
             os.remove('design_0.npo')
         call(['multitubedesign', 'design.np'])
