@@ -30,52 +30,9 @@ class Species:
             id_compl = any(['*' in d for d in self.id_strand])
             
         # first fill out stuff based on neighbours
-        inherit_active = sum([d != '0' for d in self.active_state_strand]) > \
-        sum([d != '0' for d in self.state_strand])
         if len(self.activate_u) == 0 and len(self.repress_u) == 0:
                 self.state_strand = self.active_state_strand
-        
-        """if inherit_active:
-            for i, d in enumerate(self.active_state_strand):
-                if d == '0':
-                    self.active_state_strand[i] = \
-                    label(domain_counter, not(id_compl))
-                    domain_counter += 1
-            if len(self.activate_u) == 0 and len(self.repress_u) == 0:
-                self.state_strand = self.active_state_strand
-            else:
-                self.state_strand[1:] = self.active_state_strand[1:]
-                self.state_strand[0] = label(domain_counter, not(id_compl))
-                domain_counter += 1
-            if not '2' in self.state_strand[4]:
-                if id_compl:
-                    self.state_strand[4] += '2'
-                else:
-                    self.state_strand[4] = \
-                    self.state_strand[4][:-1] + '2*'
-            
-                    
-        else:
-            for i, d in enumerate(self.state_strand):
-                if d == '0':
-                    self.state_strand[i] = \
-                    label(domain_counter, not(id_compl))
-                    domain_counter += 1
-                    #if i == 2 and domain_counter == 3:
-                    #    self.state_strand[2] = 'c1'
-            if len(self.activate_u) == 0 and len(self.repress_u) == 0:
-                self.active_state_strand = self.state_strand
-            else:
-                self.active_state_strand[1:] = self.state_strand[1:]
-                self.active_state_strand[0] = \
-                label(domain_counter, not(id_compl))
-                domain_counter += 1      
-            if not '2' in self.active_state_strand[4]:
-                if id_compl:
-                    self.active_state_strand[4] += '2'
-                else:
-                    self.active_state_strand[4] = \
-                    self.active_state_strand[4][:-1] + '2*'"""
+    
                     
         for i in range(len(self.state_strand)):
             if i == 0 and self.state_strand[0] == '0':
@@ -138,18 +95,9 @@ class Species:
                     domain_counter += 1
                     
             
-            
-        #for i, d in enumerate(self.state_strand):
-         #   if d == '0':
-          #      self.state_strand[i] =  label(domain_counter, not(id_compl))
-                #if i == 2:
-                #    self.state_strand[2] += '1'
-           #     domain_counter += 1"""
         self.id_strand[1:4] = complement(self.state_strand[3:0:-1])
         self.id_strand[2] = 'c*' if id_compl else 'c'
         
-        #if self.id_strand[2] == '0':
-        #   self.id_strand[2] = 'c2*'
         for i in [0,4]:
             if self.id_strand[i] == '0':
                 self.id_strand[i] = label(domain_counter, id_compl)
@@ -398,20 +346,6 @@ def allocate_central_domains(chains, members, species):
                         except:
                             pass
         
-<<<<<<< HEAD
-species = create_species(A)
-ss1 = species[1].state_strand
-added_domains = enumerate_domains(species)
-
-for s in species:
-    print(s.state_strand)
-    print(s.id_strand[::-1])
-    try:
-        print(s.active_state_strand)
-    except:
-        pass
-    print('')
-=======
                 if allocated_numbers[1] == allocated_numbers[0] or \
                 allocated_numbers[1] == allocated_numbers[2] and \
                 allocated_numbers[1] != -1:
@@ -454,8 +388,6 @@ if __name__ == '__main__':
         print('Active: ', s.active_state_strand)
         print('')
 
-
->>>>>>> nupackv2
     
     
             
