@@ -32,8 +32,10 @@ class Species:
         # first fill out stuff based on neighbours
         inherit_active = sum([d != '0' for d in self.active_state_strand]) > \
         sum([d != '0' for d in self.state_strand])
+        if len(self.activate_u) == 0 and len(self.repress_u) == 0:
+                self.state_strand = self.active_state_strand
         
-        if inherit_active:
+        """if inherit_active:
             for i, d in enumerate(self.active_state_strand):
                 if d == '0':
                     self.active_state_strand[i] = \
@@ -73,8 +75,68 @@ class Species:
                     self.active_state_strand[4] += '2'
                 else:
                     self.active_state_strand[4] = \
+                    self.active_state_strand[4][:-1] + '2*'"""
+                    
+        for i in range(len(self.state_strand)):
+            if i == 0 and self.state_strand[0] == '0':
+                self.state_strand[0] = \
+                    label(domain_counter, not(id_compl))
+                domain_counter += 1
+            if i in [1, 2, 3] and self.active_state_strand[i] != '0' and \
+            self.state_strand[i] == '0':
+                self.state_strand[i] = self.active_state_strand[i]
+            elif i in [1, 2, 3] and self.state_strand[i] != '0' and \
+            self.active_state_strand[i] == '0':
+                self.active_state_strand[i] = self.state_strand[i]
+            elif i in [1, 2, 3] and self.state_strand[i] == '0' and \
+            self.active_state_strand[i] == '0':
+                self.state_strand[i] = \
+                label(domain_counter, not(id_compl))
+                self.active_state_strand[i] = self.state_strand[i]
+                domain_counter += 1
+            if i == 4 and self.state_strand[4] != '0' and \
+            self.active_state_strand[4] == '0':
+                if '2*' in self.state_strand[4]:
+                    self.active_state_strand[4] = \
+                    self.state_strand[4][:-2] + '*'
+                elif '2' in self.state_strand[4]:
+                    self.active_state_strand[4] = \
+                    self.state_strand[4][:-1]
+                elif '*' in self.state_strand[4]:
+                    self.active_state_strand[4] = \
+                    self.state_strand[4][:-1] + '2*'
+                else:
+                    self.active_state_strand[4] = \
+                    self.state_strand[4] + '2'
+            elif i == 4 and self.active_state_strand[4] != '0' and \
+            self.state_strand[4] == '0':
+                if '2*' in self.active_state_strand[4]:
+                    self.state_strand[4] = \
+                    self.active_state_strand[4][:-2] + '*'
+                elif '2' in self.active_state_strand[4]:
+                    self.state_strand[4] = \
+                    self.active_state_strand[4][:-1]
+                elif '*' in self.active_state_strand[4]:
+                    self.state_strand[4] = \
                     self.active_state_strand[4][:-1] + '2*'
-                
+                else:
+                    self.state_strand[4] = \
+                    self.active_state_strand[4] + '2'
+            elif i == 4  and self.active_state_strand[4] == '0' and \
+            self.state_strand[4] == '0':
+                if id_compl:
+                    self.active_state_strand[4] = \
+                    label(domain_counter) + '2'
+                    self.state_strand[4] = \
+                    label(domain_counter)
+                    domain_counter += 1
+                else:
+                    self.active_state_strand[4] = \
+                    label(domain_counter) + '2*'
+                    self.state_strand[4] = \
+                    label(domain_counter) + '*'
+                    domain_counter += 1
+                    
             
             
         #for i, d in enumerate(self.state_strand):
@@ -91,6 +153,11 @@ class Species:
         for i in [0,4]:
             if self.id_strand[i] == '0':
                 self.id_strand[i] = label(domain_counter, id_compl)
+                domain_counter += 1
+        if self.active_state_strand[0] == '0':
+            # do this only here to make sure domain names run smoothly
+                self.active_state_strand[0] = \
+                    label(domain_counter, not(id_compl))
                 domain_counter += 1
                 
         return domain_counter
@@ -191,6 +258,7 @@ def enumerate_domains(species_list, g):
     neighbourhood = g.neighbors(0)
 
     for _ in range(len(not_enumerated)):
+
         i = smallest_common(not_enumerated, neighbourhood)
         species_list[i].fill_complementary_domains()
         domain_counter = species_list[i].fill_domains(domain_counter)
@@ -199,7 +267,7 @@ def enumerate_domains(species_list, g):
         neighbourhood.extend(g.neighbors(i))
         neighbourhood = np.unique(neighbourhood).tolist()
         neighbourhood.sort()
-
+        
 def unique(l1, l2):
     unique_list = []
     for item in l1:
@@ -296,7 +364,6 @@ def allocate_central_domains(chains, members, species):
                 else:
                     strand[2] = 'c' + str(i+2)
     else:
-        
         triplets = []
         for c in range(len(chains)):
             for i in range(len(differ_pairs)):
@@ -306,8 +373,9 @@ def allocate_central_domains(chains, members, species):
                                 move_to_centre(
                                         unique(
                                                 differ_pairs[i],
-                                                differ_pairs[j]),
-                                                c))
+                                                differ_pairs[j]), c))
+        triplets = [t for t in triplets if len(t) == 3]
+                    
         for triplet in triplets:
             triplet_central_domains = [chains[chain][0][2]
             for chain in triplet]
@@ -320,7 +388,6 @@ def allocate_central_domains(chains, members, species):
                         allocated_numbers[i] = int(t[1])
             new_domains = suitable_domains([a for a in allocated_numbers
                                             if a != -1])
-            print(new_domains)
             if len(new_domains):
                 # not all three 
                 if any([a == -1 for a in allocated_numbers]):

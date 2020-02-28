@@ -14,6 +14,7 @@ def text2graph(filename):
     f = [line[:-1] if '\n' in line else line for line in f]
     # figure out how many 
     names = list(set([line[i] for line in f for i in (-1, 0)]))
+    names.sort()
     
     A = np.zeros([len(names), len(names)])
     for i, line in enumerate(f):

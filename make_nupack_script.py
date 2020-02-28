@@ -6,9 +6,9 @@ Created on Wed Feb 19 18:14:05 2020
 @author: antti
 """
 from time import localtime
-def make_nupack_script(species_list, central_mismatch, stop):
+def design_script(species_list, central_mismatch, stop):
     # no mismatches here yet
-    f = open('script.np', 'w')
+    f = open('design.np', 'w')
     lt = localtime()
     f.write('# Created %d.%d.%d %d.%d.%d #\n' % (lt[2], lt[1], lt[0],
             lt[3], lt[4], lt[5]))
@@ -54,16 +54,169 @@ def make_nupack_script(species_list, central_mismatch, stop):
         if d == 'c':
             if central_mismatch:
                 f.write('domain c = N5CN5CN5CN5\n')
+                #f.write('domain c = N23\n')
             else:
                 f.write('domain c = N15\n')
         elif d == 'c2':
             f.write('domain c2 = N5GN5CN5CN5\n')
+            #f.write('domain c2 = N23\n')
         elif d == 'c3':
             f.write('domain c3 = N5CN5GN5CN5\n')
+            #f.write('domain c3 = N23\n')
         elif d == 'c4':
             f.write('domain c4 = N5CN5CN5GN5\n')
+            #f.write('domain c4 = N23\n')
         else:
-           f.write('domain %s = N5\n' % d)
+            if False:#'2' in d and d[0] in domains:
+               # force toehold C-C mismatch 
+                for s in species_list:
+                    if d in s.active_state_strand + s.state_strand:
+                       # figure out which of the neighbours
+                       # has the other toehold
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d[0] + '*' in s2.active_state_strand + \
+                            s2.state_strand:
+                               # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            print(s.name, s2.name, d, 1)
+                            f.write('domain %s = GN4\n' % d[0])
+                            f.write('domain %s = CN4\n' % d)
+                            break
+                        else:
+                            # s2 is downstream of s
+                            print(s.name, s2.name, d, 2)
+                            f.write('domain %s = N4G\n' % d[0])
+                            f.write('domain %s = N4C\n' % d)
+                            break
+                    elif d + '*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d[0] in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            print(s.name, s2.name, d, 3)
+                            f.write('domain %s = N4C\n' % d[0])
+                            f.write('domain %s = N4G\n' % d)
+                            break
+                        else:
+                            # s2 is downstream of s
+                            print(s.name, s2.name, d, 4)
+                            f.write('domain %s = CN4\n' % d[0])
+                            f.write('domain %s = GN4\n' % d)
+                            break
+                    elif d[0] in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d + '*' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            print(s.name, s2.name, d, 5)
+                            f.write('domain %s = CN4\n' % d[0])
+                            f.write('domain %s = GN4\n' % d)
+                            break
+                        else:
+                            # s2 is downstream of s
+                            print(s.name, s2.name, d, 6)
+                            f.write('domain %s = N4C\n' % d[0])
+                            f.write('domain %s = N4G\n' % d)
+                            break
+                    elif d[0] + '*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            print(s.name, s2.name, d, 7)
+                            f.write('domain %s = N4G\n' % d[0])
+                            f.write('domain %s = N4C\n' % d)
+                            break
+                        else:
+                            # s2 is downstream of s
+                            print(s.name, s2.name, d, 8)
+                            f.write('domain %s = GN4\n' % d[0])
+                            f.write('domain %s = CN4\n' % d)
+                            break
+                           
+                    
+                # force toehold C-C mismatch
+            elif '2' in d and d[:-1] in domains:
+                for s in species_list:
+                    if d[:-1] in s.active_state_strand[0]:
+                        if s.active_state_strand[0] == d[:-1]:
+                            # no invert, d[0] C
+                            f.write('domain %s = N4C\n' % d[:-1])
+                            f.write('domain %s = N4G\n' % d)
+                            break
+                        elif s.active_state_strand[0] == d:
+                            # no invert, d[0] G
+                            f.write('domain %s = N4G\n' % d[:-1])
+                            f.write('domain %s = N4C\n' % d)
+                            break
+                        elif s.active_state_strand[0] == d[:-1] + '*':
+                            # invert, d[0] G
+                            f.write('domain %s = GN4\n' % d[:-1])
+                            f.write('domain %s = CN4\n' % d)
+                            break
+                        elif s.active_state_strand[0] == d + '*':
+                            f.write('domain %s = CN4\n' % d[:-1])
+                            f.write('domain %s = GN4\n' % d)
+                            break
+                        break
+                    elif d[:-1] in s.active_state_strand[4]:
+                        if s.active_state_strand[4] == d[:-1]:
+                            # no invert, d[0] C
+                            f.write('domain %s = CN4\n' % d[:-1])
+                            f.write('domain %s = GN4\n' % d)
+                            break
+                        elif s.active_state_strand[4] == d:
+                            # no invert, d[0] G
+                            f.write('domain %s = GN4\n' % d[:-1])
+                            f.write('domain %s = CN4\n' % d)
+                            break
+                        elif s.active_state_strand[4] == d[:-1] + '*':
+                            # invert, d[0] G
+                            f.write('domain %s = N4G\n' % d[:-1])
+                            f.write('domain %s = N4C\n' % d)
+                            break
+                        elif s.active_state_strand[4] == d + '*':
+                            f.write('domain %s = N4C\n' % d[:-1])
+                            f.write('domain %s = N4G\n' % d)
+                            break
+                        break
+            elif not d + '2' in domains:
+                f.write('domain %s = N5\n' % d)
+               
+               
+                 
+               
+                
+                       
+                 
+            #   f.write('similarity ' + d[0] + '3 = N5\n')
+             #  f.write(d[0] + '.similarity[frac] '+ d[0] +
+               #        '3 = [0.80, 0.80]\n')
+              # f.write(d + '.similarity[frac] ' + d[0] +
+                #       '3 = [1.00, 1.00]\n')
 
     
     f.write('\n# strands # \n\n')
@@ -106,7 +259,8 @@ def make_nupack_script(species_list, central_mismatch, stop):
                     ' ' + s.id_strand_name + '\n')
         for downstream_species in s.activate_d:
             f.write('complex WASTE_' + s.name + downstream_species.name * 2 +
-                    'act = ' + downstream_species.state_strand_name +
+                    'act = ' +
+                    downstream_species.state_strand_name +
                     ' ' + s.active_state_strand_name + '\n')
             f.write('complex ' + s.name + downstream_species.name + ' = ' +
                     s.id_strand_name + ' ' +
@@ -116,17 +270,17 @@ def make_nupack_script(species_list, central_mismatch, stop):
                     downstream_species.active_state_strand_name +
                     ' ' + s.active_state_strand_name + '\n')
         for downstream_species in s.repress_d:
-            f.write('complex WASTE_' + s.name + downstream_species.name * 2 +
-                    'act = ' +
+            f.write('complex WASTE_' + s.name + downstream_species.name +
+                    'act' + downstream_species.name + ' = ' +
                     downstream_species.active_state_strand_name +
                     ' ' + s.active_state_strand_name + '\n')
             f.write('complex ' + s.name + downstream_species.name + ' = ' +
                     s.id_strand_name + ' ' +
                     downstream_species.id_strand_name + '\n')
-            f.write('complex FUEL_' + s.name + downstream_species.name * 2 +
-                    'act = ' +
-                    downstream_species.state_strand_name +
-                    ' ' + s.active_state_strand_name + '\n')
+            f.write('complex FUEL_' + s.name + downstream_species.name +
+                    'act' + downstream_species.name + ' = ' +
+                    downstream_species.state_strand_name + ' ' +
+                    s.active_state_strand_name + '\n')
     
     f.write('\n# structures of complexes #\n\n')
     # species
@@ -134,38 +288,38 @@ def make_nupack_script(species_list, central_mismatch, stop):
         if len(s.activate_u + s.repress_u):
             if central_mismatch:
                 if s.state_strand[2] in ['c2', 'c4*']: 
-                    f.write('structure %s = %s\n' % (s.name, species_format1))
+                    f.write('%s.structure = %s\n' % (s.name, species_format1))
                 elif s.state_strand[2] in ['c3', 'c3*']:
-                    f.write('structure %s = %s\n' % (s.name, species_format2))
+                    f.write('%s.structure = %s\n' % (s.name, species_format2))
                 elif s.state_strand[2] in ['c4', 'c2*']:
-                    f.write('structure %s = %s\n' % (s.name, species_format3))
+                    f.write('%s.structure = %s\n' % (s.name, species_format3))
                 else:
                     raise ValueError('Incorrect central domain')
                 if s.active_state_strand[2] in ['c2', 'c4*']: 
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name + 'act', species_format1))
                 elif s.active_state_strand[2] in ['c3', 'c3*']:
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name + 'act', species_format2))
                 elif s.active_state_strand[2] in ['c4', 'c2*']:
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name + 'act', species_format3))
                 else:
                     raise ValueError('Incorrect central domain')
             else:
-                f.write('structure %s = %s\n' % (s.name, species_format))
-                f.write('structure %s = %s\n' % (s.name + 'act',
+                f.write('%s.structure = %s\n' % (s.name, species_format))
+                f.write('%s.structure = %s\n' % (s.name + 'act',
                                                  species_format))
         else:
             if central_mismatch:
                 if s.active_state_strand[2] in ['c2', 'c4*']: 
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name, species_format1))
                 elif s.active_state_strand[2] in ['c3', 'c3*']:
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name, species_format2))
                 elif s.active_state_strand[2] in ['c4', 'c2*']:
-                    f.write('structure %s = %s\n' %
+                    f.write('%s.structure = %s\n' %
                             (s.name, species_format3))
                 else:
                     raise ValueError('Incorrect central domain')
@@ -180,24 +334,32 @@ def make_nupack_script(species_list, central_mismatch, stop):
             
             # catalyst state strand is on the bottom
             if central_mismatch:
-                if downstream_species.active_state_strand[2][0:2] == 'c3' \
-                and s.state_strand[2][0:2] == 'c4' \
-                or downstream_species.active_state_strand[2][0:2] == 'c2' \
-                and s.state_strand[2][0:2] == 'c3':
+                if downstream_species.active_state_strand[2] == 'c2' \
+                and s.active_state_strand[2] == 'c3*' \
+                or downstream_species.active_state_strand[2] == 'c3' \
+                and s.active_state_strand[2] == 'c2*'\
+                or downstream_species.active_state_strand[2] == 'c3*' \
+                and s.active_state_strand[2] == 'c4' \
+                or downstream_species.active_state_strand[2] == 'c4*' \
+                and s.active_state_strand[2] == 'c3':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name * 2 +
                          'act', fuel_format1))
                 elif downstream_species.active_state_strand[2][0:2] == 'c4' \
-                and s.state_strand[2][0:2] == 'c2' \
+                and s.active_state_strand[2][0:2] == 'c2' \
                 or downstream_species.active_state_strand[2][0:2] == 'c2' \
-                and s.state_strand[2][0:2] == 'c4':
+                and s.active_state_strand[2][0:2] == 'c4':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name * 2 +
                          'act', fuel_format2))
-                elif downstream_species.active_state_strand[2][0:2] == 'c4' \
-                and s.state_strand[2][0:2] == 'c3' \
-                or downstream_species.active_state_strand[2][0:2] == 'c3' \
-                and s.state_strand[2][0:2] == 'c2':
+                elif downstream_species.active_state_strand[2] == 'c3*' \
+                and s.active_state_strand[2] == 'c2' \
+                or downstream_species.active_state_strand[2] == 'c2*' \
+                and s.active_state_strand[2] == 'c3'\
+                or downstream_species.active_state_strand[2] == 'c3' \
+                and s.active_state_strand[2] == 'c4*' \
+                or downstream_species.active_state_strand[2] == 'c4' \
+                and s.active_state_strand[2] == 'c3*':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name * 2 +
                          'act', fuel_format3))
@@ -214,24 +376,32 @@ def make_nupack_script(species_list, central_mismatch, stop):
                     (s.name + downstream_species.name,
                      intermediate_product_format))
             if central_mismatch:
-                if downstream_species.state_strand[2][0:2] == 'c3' \
-                and s.state_strand[2][0:2] == 'c4' \
-                or downstream_species.state_strand[2][0:2] == 'c2' \
-                and s.state_strand[2][0:2] == 'c3':
+                if downstream_species.state_strand[2] == 'c2' \
+                and s.active_state_strand[2] == 'c3*' \
+                or downstream_species.state_strand[2] == 'c3' \
+                and s.active_state_strand[2] == 'c2*'\
+                or downstream_species.state_strand[2] == 'c3*' \
+                and s.active_state_strand[2] == 'c4' \
+                or downstream_species.state_strand[2] == 'c4*' \
+                and s.active_state_strand[2] == 'c3':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name + 'act' +
                          downstream_species.name, fuel_format1))
                 elif downstream_species.state_strand[2][0:2] == 'c4' \
-                and s.state_strand[2][0:2] == 'c2' \
+                and s.active_state_strand[2][0:2] == 'c2' \
                 or downstream_species.state_strand[2][0:2] == 'c2' \
-                and s.state_strand[2][0:2] == 'c4':
+                and s.active_state_strand[2][0:2] == 'c4':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name + 'act' +
                          downstream_species.name, fuel_format2))
-                elif downstream_species.state_strand[2][0:2] == 'c4' \
-                and s.state_strand[2][0:2] == 'c3' \
-                or downstream_species.state_strand[2][0:2] == 'c3' \
-                and s.state_strand[2][0:2] == 'c2':
+                elif downstream_species.state_strand[2] == 'c3*' \
+                and s.active_state_strand[2] == 'c2' \
+                or downstream_species.state_strand[2] == 'c2*' \
+                and s.active_state_strand[2] == 'c3'\
+                or downstream_species.state_strand[2] == 'c3' \
+                and s.active_state_strand[2] == 'c4*' \
+                or downstream_species.state_strand[2] == 'c4' \
+                and s.active_state_strand[2] == 'c3*':
                     f.write('%s.structure = %s\n' %
                         ('FUEL_' + s.name + downstream_species.name + 'act' +
                          downstream_species.name, fuel_format3))
@@ -258,6 +428,196 @@ def list_to_string(l):
     for item in l:
         out += item + ' '
     return out
+
+def defect_script(species_list, central_mismatch=False):
+    # perform mismatches and re-analyse system
+    f = open('design.np', 'r')
+    np = f.readlines()
+    f.close()
+    f = open('design_0.npo', 'r')
+    npo = f.readlines()
+    f.close()
+    
+    f = open('defect.np', 'w')
+    
+    # find where we start the domain sequences in npo file
+    domains = [d if not '*' in d else d[:-1] for s in species_list 
+               for d in s.state_strand + s.id_strand + s.active_state_strand]
+    domains_start = ['domains:' in line for line in npo].index(True)
+    domain_line = domains_start + 1
+    for line in np:
+        if not 'domain ' in line:
+            f.write(line)
+        else:
+            # pick sequence from the 
+            d = npo[domain_line].split()[0]
+            sequence = npo[domain_line].split()[2]
+            if d == 'c' and central_mismatch:
+                sequence[5] = 'C'
+                sequence[11] = 'C'
+                sequence[17] = 'C'
+            if d == 'c2' and central_mismatch:
+                sequence[5] = 'G'
+                sequence[11] = 'C'
+                sequence[17] = 'C'
+            if d == 'c3' and central_mismatch:
+                sequence[5] = 'C'
+                sequence[11] = 'G'
+                sequence[17] = 'C'
+            if d == 'c4' and central_mismatch:
+                sequence[5] = 'C'
+                sequence[11] = 'C'
+                sequence[17] = 'G'
+            if '2' in d and d[0] in domains:
+                for s in species_list:
+                    if d in s.active_state_strand + s.state_strand:
+                        # figure out which of the neighbours
+                        # has the other toehold
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d[0] + '*' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = 'C' + sequence[1:]
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = sequence[:4] + 'C'
+                            break
+                    elif d + '*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d[0] in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = sequence[:4] + 'G'
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = 'G' + sequence[1:]
+                            break
+                    elif d[0] in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d + '*' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = 'G' + sequence[1:]
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = sequence[:4] + 'G'
+                            break
+                    elif d[0] + '*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = sequence[:4] + 'C'
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = 'C' + sequence[1:]
+                            break
+            if d + '2' in domains:
+                for s in species_list:
+                    if d + '2' in s.active_state_strand + s.state_strand:
+                        # figure out which of the neighbours
+                        # has the other toehold
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d + '*' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = 'G' + sequence[1:]
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = sequence[:4] + 'G'
+                            break
+                    elif d + '2*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = sequence[:4] + 'C'
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = 'C' + sequence[1:]
+                            break
+                    elif d in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d + '2*' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = 'C' + sequence[1:]
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = sequence[:4] + 'C'
+                            break
+                    elif d + '*' in s.active_state_strand + s.state_strand:
+                        for s2 in s.activate_u + s.repress_u + \
+                        s.activate_d + s.repress_d:
+                            if d + '2' in s2.active_state_strand + \
+                            s2.state_strand:
+                                # we have our pair of species
+                                break
+                        # now we need to figure out what
+                        # is their relation
+                        if s2 in s.repress_u + s.activate_u:
+                            # s2 is upstream of s
+                            sequence = sequence[:4] + 'G'
+                            break
+                        else:
+                            # s2 is downstream of s
+                            sequence = 'G' + sequence[1:]
+                            break
+            f.write('domain %s = %s\n' % (d, sequence))
+            domain_line += 2 # npo file defines complements as well
+    f.close()
+    
+    
+    
     
         
         
