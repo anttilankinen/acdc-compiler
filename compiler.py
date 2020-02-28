@@ -5,7 +5,7 @@ from subprocess import call
 from text2graph import text2graph
 from topology_checker import is_valid
 from domain_enumerator import make_domains
-from make_nupack_script import design_script, defect_script
+from make_nupack_script import design_script
 
 def get_args():
     parser = argparse.ArgumentParser(description='Check validity of an ACDC ' +
@@ -19,14 +19,19 @@ def get_args():
     return parser.parse_args()
 
 
-#args = get_args()
-A, g, names = text2graph('testgraph2.txt') # adjacency matrix, graph, names of nodes
+args = get_args()
+print('ACDC Compiler')
+print('Input file:', args.input)
+print('Target defect (%):', args.stop)
+print('Central domain mismatches:', args.central)
+print('Run NUPACK:', args.nupack)
+A, g, names = text2graph(args.input) # adjacency matrix, graph, names of nodes
 result, error = is_valid(g)
 if result:
     # YAY!
-    species = make_domains(A, g, names, central_mismatch=True)
-    design_script(species, central_mismatch=True, stop=5)
-    if True:
+    species = make_domains(A, g, names, central_mismatch=args.central)
+    design_script(species, central_mismatch=args.central, stop=args.stop)
+    if args.nupack:
         if os.path.isfile('design_0.npo'):
             os.remove('design_0.npo')
         call(['multitubedesign', 'design.np'])
