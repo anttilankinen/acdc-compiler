@@ -6,6 +6,7 @@ Created on Wed Feb  5 14:05:57 2020
 @author: antti
 """
 import string
+from itertools import combinations
 import numpy as np
 import igraph
 
@@ -94,9 +95,10 @@ class Species:
                     label(domain_counter) + '*'
                     domain_counter += 1
                     
-            
-        self.id_strand[1:4] = complement(self.state_strand[3:0:-1])
+        self.id_strand[1] = complement(self.state_strand[3]) 
         self.id_strand[2] = 'c*' if id_compl else 'c'
+        self.id_strand[3] = inner_toehold_mismatch_complement(
+                self.state_strand[1])
         
         for i in [0,4]:
             if self.id_strand[i] == '0':
@@ -176,6 +178,13 @@ def complement(d):
             return d + '*'
     elif type(d) == list:
         return [complement(c) for c in d]
+    
+def inner_toehold_mismatch_complement(d):
+    if '*' in d:
+        return d[:-1] + '2'
+    else:
+        return d + '2*'
+    
 
 def create_species(A, names):
     # create species from adjacency matrix A
@@ -296,10 +305,18 @@ def suitable_domains(l):
     return [i for i in [2, 3, 4] if i not in l]
 
 
+def make_pairs(differ_sets):
+    differ_pairs = []
+    for s in differ_sets:
+        pairs = combinations(s, 2)
+        for p in pairs:
+            differ_pairs.append(p)
+    return differ_pairs
+
 def allocate_central_domains(chains, members, species):
-    differ_pairs = [[i for i in range(len(members)) if j in members[i]]
+    differ_sets= [[i for i in range(len(members)) if j in members[i]]
     for j in range(len(species))]
-    differ_pairs = [pair for pair in differ_pairs if len(pair) == 2]
+    differ_pairs = make_pairs(differ_sets)
     # these have to be made such that the one that the one in focus
     # is in the middle
     if len(differ_pairs) == 1:
@@ -323,7 +340,6 @@ def allocate_central_domains(chains, members, species):
                                                 differ_pairs[i],
                                                 differ_pairs[j]), c))
         triplets = [t for t in triplets if len(t) == 3]
-                    
         for triplet in triplets:
             triplet_central_domains = [chains[chain][0][2]
             for chain in triplet]
@@ -359,12 +375,21 @@ def allocate_central_domains(chains, members, species):
                     else:
                         strand[2] = 'c' + str(allocated_numbers[i])
                         
+            # if there's something left untouched, set it to c2
+            #for s in species:
+            #    if s.state_strand[2] == 'c':
+            #        s.state_strand[2] = 'c2'
+            #    if s.state_strand[2] == 'c*':
+            #        s.state_strand[2] = 'c2*'
+            #    if s.active_state_strand[]
+                        
 def make_domains(A, g, names, central_mismatch=False):
     species = create_species(A, names)
     enumerate_domains(species, g)
     if central_mismatch:
         chains, members = make_chains(species)
         allocate_central_domains(chains, members, species)
+
     return species
     
 if __name__ == '__main__':      

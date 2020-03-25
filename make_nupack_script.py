@@ -16,12 +16,12 @@ def design_script(species_list, central_mismatch, stop):
     f.write('temperature[C] = 25.0\n')
     f.write('trials = 10\n')
     if central_mismatch:
-        species_format1 = '.' * 5 + '(' * 10 + '.' + '(' * 22 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 22 + '.' + ')' * 10 + '.' * 5
-        species_format2 = '.' * 5 + '(' * 16 + '.' + '(' * 16 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 16 + '.' + ')' * 16 + '.' * 5
-        species_format3 = '.' * 5 + '(' * 22 + '.' + '(' * 10 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 10 + '.' + ')' * 22 + '.' * 5
+        species_format1 = '.' * 6 + '(' * 9 + '.' + '(' * 22 + '.' * 5 + \
+        '+' + '.' * 5 + ')' * 22 + '.' + ')' * 9 + '.' * 6
+        species_format2 = '.' * 6 + '(' * 15 + '.' + '(' * 16 + '.' * 5 + \
+        '+' + '.' * 5 + ')' * 16 + '.' + ')' * 15 + '.' * 6
+        species_format3 = '.' * 6 + '(' * 21 + '.' + '(' * 10 + '.' * 5 + \
+        '+' + '.' * 5 + ')' * 10 + '.' + ')' * 21 + '.' * 6
         # 1,2
         fuel_format1 = '.' * 10 + '(' * 5 + '.' + '(' * 5 + '.' + \
         '(' *  16 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 16 + \
@@ -34,14 +34,19 @@ def design_script(species_list, central_mismatch, stop):
         fuel_format3 = '.' * 10 + '(' * 11 + '.' + '(' * 5 + '.' + \
         '(' *  10 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 10 + \
         '.' + ')' * 5 + '.' + ')' * 11 + '.' * 10
-        intermediate_product_format = \
+        intermediate_product_format = '.' * 10 + '(' * 27 + '.' + \
+        '(' * 5 + '+' + ')' * 5 + '.' +')' * 27 + '.' * 10
+        waste_format = \
         '.' * 10 + '(' * 33 + '+' + ')' * 33 + '.' * 10
     else:
-        species_format = '.' * 5 + '(' * 25 + '.' * 5 + '+' +\
-        '.' * 5 + ')' * 25 + '.' * 5
+        species_format = '.' * 6 + '(' * 24 + '.' * 5 + '+' +\
+        '.' * 5 + ')' * 24 + '.' * 6
         fuel_format = '.' * 10 + '(' * 20 + '.' + '(' * 4 + '+' +\
         ')' * 4 + '.' + ')' * 20 + '.' * 10
         intermediate_product_format = \
+        '.' * 10 + '(' * 19 + '.' + '(' * 5 + '+' + \
+        ')' * 5 + '.' + ')' * 19 + '.' * 10
+        waste_format = \
         '.' * 10 + '(' * 25 + '+' + ')' * 25 + '.' * 10
         
             
@@ -67,99 +72,8 @@ def design_script(species_list, central_mismatch, stop):
             f.write('domain c4 = N5CN5CN5GN5\n')
             #f.write('domain c4 = N23\n')
         else:
-            if False:#'2' in d and d[0] in domains:
-               # force toehold C-C mismatch 
-                for s in species_list:
-                    if d in s.active_state_strand + s.state_strand:
-                       # figure out which of the neighbours
-                       # has the other toehold
-                        for s2 in s.activate_u + s.repress_u + \
-                        s.activate_d + s.repress_d:
-                            if d[0] + '*' in s2.active_state_strand + \
-                            s2.state_strand:
-                               # we have our pair of species
-                                break
-                        # now we need to figure out what
-                        # is their relation
-                        if s2 in s.repress_u + s.activate_u:
-                            # s2 is upstream of s
-                            print(s.name, s2.name, d, 1)
-                            f.write('domain %s = GN4\n' % d[0])
-                            f.write('domain %s = CN4\n' % d)
-                            break
-                        else:
-                            # s2 is downstream of s
-                            print(s.name, s2.name, d, 2)
-                            f.write('domain %s = N4G\n' % d[0])
-                            f.write('domain %s = N4C\n' % d)
-                            break
-                    elif d + '*' in s.active_state_strand + s.state_strand:
-                        for s2 in s.activate_u + s.repress_u + \
-                        s.activate_d + s.repress_d:
-                            if d[0] in s2.active_state_strand + \
-                            s2.state_strand:
-                                # we have our pair of species
-                                break
-                        # now we need to figure out what
-                        # is their relation
-                        if s2 in s.repress_u + s.activate_u:
-                            # s2 is upstream of s
-                            print(s.name, s2.name, d, 3)
-                            f.write('domain %s = N4C\n' % d[0])
-                            f.write('domain %s = N4G\n' % d)
-                            break
-                        else:
-                            # s2 is downstream of s
-                            print(s.name, s2.name, d, 4)
-                            f.write('domain %s = CN4\n' % d[0])
-                            f.write('domain %s = GN4\n' % d)
-                            break
-                    elif d[0] in s.active_state_strand + s.state_strand:
-                        for s2 in s.activate_u + s.repress_u + \
-                        s.activate_d + s.repress_d:
-                            if d + '*' in s2.active_state_strand + \
-                            s2.state_strand:
-                                # we have our pair of species
-                                break
-                        # now we need to figure out what
-                        # is their relation
-                        if s2 in s.repress_u + s.activate_u:
-                            # s2 is upstream of s
-                            print(s.name, s2.name, d, 5)
-                            f.write('domain %s = CN4\n' % d[0])
-                            f.write('domain %s = GN4\n' % d)
-                            break
-                        else:
-                            # s2 is downstream of s
-                            print(s.name, s2.name, d, 6)
-                            f.write('domain %s = N4C\n' % d[0])
-                            f.write('domain %s = N4G\n' % d)
-                            break
-                    elif d[0] + '*' in s.active_state_strand + s.state_strand:
-                        for s2 in s.activate_u + s.repress_u + \
-                        s.activate_d + s.repress_d:
-                            if d in s2.active_state_strand + \
-                            s2.state_strand:
-                                # we have our pair of species
-                                break
-                        # now we need to figure out what
-                        # is their relation
-                        if s2 in s.repress_u + s.activate_u:
-                            # s2 is upstream of s
-                            print(s.name, s2.name, d, 7)
-                            f.write('domain %s = N4G\n' % d[0])
-                            f.write('domain %s = N4C\n' % d)
-                            break
-                        else:
-                            # s2 is downstream of s
-                            print(s.name, s2.name, d, 8)
-                            f.write('domain %s = GN4\n' % d[0])
-                            f.write('domain %s = CN4\n' % d)
-                            break
-                           
-                    
-                # force toehold C-C mismatch
-            elif '2' in d and d[:-1] in domains:
+            # force toehold mismatch
+            if '2' in d and d[:-1] in domains:
                 for s in species_list:
                     if d[:-1] in s.active_state_strand[0]:
                         if s.active_state_strand[0] == d[:-1]:
@@ -203,7 +117,15 @@ def design_script(species_list, central_mismatch, stop):
                             f.write('domain %s = N4G\n' % d)
                             break
                         break
-            elif not d + '2' in domains:
+                    elif d == s.id_strand[3]:
+                        f.write('domain %s = N4G\n' % d[:-1])
+                        f.write('domain %s = N4C\n' % d)
+                        break
+                    elif d + '*' == s.id_strand[3]:
+                        f.write('domain %s = CN4\n' % d[:-1])
+                        f.write('domain %s = GN4\n' % d)
+                        break
+            elif not d + '2' in domains: # avoid duplicates
                 f.write('domain %s = N5\n' % d)
                
                
@@ -370,7 +292,7 @@ def design_script(species_list, central_mismatch, stop):
             f.write('%s.structure = %s\n' %
                     ('WASTE_' + s.name + downstream_species.name * 2 +
                      'act',
-                     intermediate_product_format))
+                     waste_format))
         for downstream_species in s.repress_d:
             f.write('%s.structure = %s\n' %
                     (s.name + downstream_species.name,
@@ -412,7 +334,7 @@ def design_script(species_list, central_mismatch, stop):
             f.write('%s.structure = %s\n' %
                     ('WASTE_' + s.name + downstream_species.name + 'act' +
                      downstream_species.name,
-                     intermediate_product_format))
+                     waste_format))
             
             
     f.write('\n# prevent sequence patterns #\n\n')

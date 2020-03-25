@@ -43,9 +43,9 @@ def is_valid(g):
                     lengths_out_invalid_diff = \
                         any([(k-min(lengths_out)) % 2 for k in lengths_out])
                     if min(lengths_out) < 2:
-                        return False, 'Short feedforward loop in network'
+                        return False, 'Short feedforward loop in network.'
                     elif lengths_out_invalid_diff:
-                        return False, 'Invalid branch structure in network'
+                        return False, 'Invalid branch structure in network.'
             if len(paths_in) > 0:
                 # some paths exists this way
                 lengths_in = [len(k)-1 for k in paths_in]
@@ -54,16 +54,16 @@ def is_valid(g):
                     lengths_in_invalid_diff = \
                         any([(k-min(lengths_in)) % 2 for k in lengths_in])
                     if min(lengths_in) < 2:
-                        return False, 'Short feedforward loop in network'
+                        return False, 'Short feedforward loop in network.'
                     elif lengths_in_invalid_diff:
-                        return False, 'Invalid branch structure in network'
+                        return False, 'Invalid branch structure in network.'
             if len(paths_in) > 0 and len(paths_out) > 0:
                 # a FBL exists
                 loop_lengths = [k + l for k in lengths_out for l in lengths_in]
                 if any(k % 2 for k in loop_lengths):
-                    return False, 'Odd cycle in network'
+                    return False, 'Odd cycle in network.'
                 elif any(k < 6 for k in loop_lengths):
-                    return False, 'Short cycle in network'
+                    return False, 'Short cycle in network.'
             
     return True, None
             
