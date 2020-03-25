@@ -28,12 +28,9 @@ print('Run NUPACK:', args.nupack)
 print('Checking if graph is a valid ACDC graph...', end='', flush=True)
 A, g, names = text2graph(args.input) # adjacency matrix, graph, names of nodes
 result, error = is_valid(g)
-if error is None:
-    print(' Done')
-else:
-    print(' Error:', error, 'Exiting')
 if result:
     # YAY!
+    print(' Done')
     print('Enumerating domains...', end='', flush=True)
     species = make_domains(A, g, names, central_mismatch=args.central)
     print(' Done')
@@ -52,7 +49,8 @@ if result:
             domains = list(set(domains))
             f = open('design_0.npo', 'r')
             npo = f.readlines()
-            defect = float(npo[-5].split()[-1])
+            defect = float(npo[-5].split()[-1]) # defect is
+                                                # always on 5th last line
             f.close()
             if defect < args.defect / 100:
                 print('Success! Created a network of %d ' % len(names) +
