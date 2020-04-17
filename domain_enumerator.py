@@ -8,33 +8,54 @@ Created on Wed Feb  5 14:05:57 2020
 import string
 from itertools import combinations
 import numpy as np
-import igraph
 
 class Species:
+    """
+    class describing an ACDC species
+    has the following attributes:
+        name - str
+        id_strand - list
+        state_strand - list
+        active_state_strand - list
+        activate_d - list, set of species which this species activates
+        repress_d - list, set of species which this species represses
+        activate_u - list, set of species which activate this species
+        repress_u - list, set of species which repress this species
+    """
     
     def __init__(self, name):
         self.name = name
 
     def initialise_strands(self):
-        
+        # all strands are initially the same with no assigned domains
         self.active_state_strand = ['0'] * 5
         self.state_strand = ['0'] * 5
         self.id_strand = ['0'] * 5
     
     def fill_domains(self, domain_counter):
-        # fills currently empty domains with new domains
-        # first need to figure which of the strands contains complementary
-        # domains
+        """
+        fill currently empty domains with new domains
+        these domains do not require any complementarity with currently
+        existing domains in other species
+        args:
+            self
+            domain_counter - int, incremental labelling for new domains
+        returns:
+            domain_counter - int
+        """
+
         if domain_counter == 0:
-            id_compl = True
+            id_compl = True # id strand's domains will contain '*'
         else:
             id_compl = any(['*' in d for d in self.id_strand])
             
-        # first fill out stuff based on neighbours
+            
         if len(self.activate_u) == 0 and len(self.repress_u) == 0:
-                self.state_strand = self.active_state_strand
+            # no upstream species, so passive and active state strand
+            # of this species aren't required in this network
+            self.state_strand = self.active_state_strand
     
-                    
+        # fill domains on the two state strands
         for i in range(len(self.state_strand)):
             if i == 0 and self.state_strand[0] == '0':
                 self.state_strand[0] = \
@@ -52,6 +73,7 @@ class Species:
                 label(domain_counter, not(id_compl))
                 self.active_state_strand[i] = self.state_strand[i]
                 domain_counter += 1
+            # downstream interface
             if i == 4 and self.state_strand[4] != '0' and \
             self.active_state_strand[4] == '0':
                 if '2*' in self.state_strand[4]:
@@ -94,9 +116,11 @@ class Species:
                     self.state_strand[4] = \
                     label(domain_counter) + '*'
                     domain_counter += 1
-                    
+        # id strand
+
         self.id_strand[1] = complement(self.state_strand[3]) 
         self.id_strand[2] = 'c*' if id_compl else 'c'
+        # mismatch on inner toehold
         self.id_strand[3] = inner_toehold_mismatch_complement(
                 self.state_strand[1])
         
@@ -113,20 +137,26 @@ class Species:
         return domain_counter
     
     def fill_complementary_domains(self):
-        # todo:
-        # add checks for active state strand
         """
-            check which of the neighbours have some domains already and fill
-            own domains accordingly 
+        check which of the neighbours have some domains already and fill
+        own domains accordingly 
+        args:
+            self
         """
-        # first downstream neighbours
+        # downstream neighbours
         for s in self.activate_d:
+            # from this set, have to inherit their state strand
+            # downstream interface to self's active state strand upstream
+            # interface
             if not any([d == '0' for d in s.state_strand[4:1:-1]]):
                 self.active_state_strand[0:3] = \
                 complement(s.state_strand[4:1:-1])
                 self.id_strand[4] = complement(s.id_strand[0])
                 break
         for s in self.repress_d:
+            # from this set, have to inherit their active state strand
+            # downstream interface to self's active state strand upstream
+            # interface
             if not any([d == '0' for d in s.active_state_strand[4:1:-1]]):
                 self.active_state_strand[0:3] = \
                 complement(s.active_state_strand[4:1:-1])
@@ -135,12 +165,17 @@ class Species:
 
         # then upstream neighbours
         for s in self.activate_u:
+            # from this set, have to inherit their active state strand
+            # upstream interface to self's state strand downstream interface
             if not any([d == '0' for d in s.active_state_strand[0:3]]):
                 self.state_strand[4:1:-1] = \
                 complement(s.active_state_strand[0:3])
                 self.id_strand[0] = complement(s.id_strand[4])
                 break
         for s in self.repress_u:
+            # from this set, have to inherit their active state strand
+            # upstream interface to self's active state strand downstream
+            # interface
             if not any([d == '0' for d in s.active_state_strand[0:3]]):
                 self.active_state_strand[4:1:-1] = \
                 complement(s.active_state_strand[0:3])
@@ -152,6 +187,15 @@ class Species:
         
         
 def label(n, compl=False):
+    """
+    transform a number to a base-26 representation and compute corresponding
+    alphabets
+    args:
+        n - int
+        compl - bool
+    returns:
+        str
+    """
     if n == 0:
         return 'a' + '*' if compl else 'a'
     digits = []
@@ -168,6 +212,13 @@ def label(n, compl=False):
     return letters + '*' if compl else letters
 
 def complement(d):
+    """
+    return the complement of a domain
+    args:
+        d - str or list
+    returns:
+        str or list
+    """
     if type(d) == str:
         if d == '0':
             return d
@@ -180,6 +231,13 @@ def complement(d):
         return [complement(c) for c in d]
     
 def inner_toehold_mismatch_complement(d):
+    """
+    return the complementary variant of an upstream interface inner toehold
+    args:
+        d - str
+    returns:
+        str
+    """
     if '*' in d:
         return d[:-1] + '2'
     else:
@@ -187,6 +245,15 @@ def inner_toehold_mismatch_complement(d):
     
 
 def create_species(A, names):
+    """
+    create a set of Species objects and compute their relations in the ACDC
+    network
+    args:
+        A - numpy NDArray
+        names - list
+    returns:
+        species_list - list
+    """
     # create species from adjacency matrix A
     species_list = [Species(names[i]) for i in range(len(names))]
     for i, s in enumerate(species_list):
@@ -209,7 +276,14 @@ def smallest_common(l1, l2):
             return k
     
 def enumerate_domains(species_list, g):
-    domain_counter = 0
+    """
+    assign domains to each species given the whole network structure
+    args:
+        species_list - list
+        g - iGraph graph
+    """
+    
+    domain_counter = 0 # keep track of which domain names have been used
     not_enumerated = np.arange(1, len(species_list))
     domain_counter += species_list[0].fill_domains(domain_counter)
     neighbourhood = g.neighbors(0)
@@ -226,6 +300,7 @@ def enumerate_domains(species_list, g):
         neighbourhood.sort()
         
 def unique(l1, l2):
+    # unique list made from items in two lists
     unique_list = []
     for item in l1:
         if not item in unique_list:
@@ -237,6 +312,15 @@ def unique(l1, l2):
     
 
 def make_chains(species_list):
+    """
+    decompose the set of strands in the whole network to chains such that the
+    within one chain, the central domain variants are the same for all strands
+    args:
+        species_list - list
+    returns:
+        chains - list
+        members - list
+    """
     chains = []
     members = []
     for l, s in enumerate(species_list):
@@ -275,7 +359,8 @@ def make_chains(species_list):
             chains.append([s.state_strand])
             members.append([l])
 
-
+        # each strand can only belong to one chain, so merge chains
+        # correspondingly
         new_chains = []
         new_members = []
         merged = []
@@ -295,17 +380,24 @@ def make_chains(species_list):
     return chains, members
 
 def move_to_centre(l, i):
-    # move i to centre of list l
+    # move item i to centre of list l of length 3
     l[l.index(i)] = l[1]
     l[1] = i
     return l
 
 def suitable_domains(l):
-    # return all numbers 1,2,3 that aren't on list l
+    # return all numbers 2,3,4 that aren't on list l
     return [i for i in [2, 3, 4] if i not in l]
 
 
 def make_pairs(differ_sets):
+    """
+    make pairs of chains which have to have different central domain variants
+    args:
+        differ_sets - list
+    returns:
+        differ_pairs - list
+    """
     differ_pairs = []
     for s in differ_sets:
         pairs = combinations(s, 2)
@@ -314,6 +406,14 @@ def make_pairs(differ_sets):
     return differ_pairs
 
 def allocate_central_domains(chains, members, species):
+    """
+    assign central domain variants to each strand
+    args:
+        chains - list
+        members - list
+        species - list
+    """
+    # make pairs of chains that have to have different central domain variants
     differ_sets= [[i for i in range(len(members)) if j in members[i]]
     for j in range(len(species))]
     differ_pairs = make_pairs(differ_sets)
@@ -329,6 +429,11 @@ def allocate_central_domains(chains, members, species):
                 else:
                     strand[2] = 'c' + str(i+2)
     else:
+        # merge these pairs into triplets ordered triplets
+        # such that the central member of the triplet has to have different
+        # central domain variants with both of the outer members.
+        # however, the two outer members do not necessarily have to have
+        # different variants
         triplets = []
         for c in range(len(chains)):
             for i in range(len(differ_pairs)):
@@ -340,10 +445,11 @@ def allocate_central_domains(chains, members, species):
                                                 differ_pairs[i],
                                                 differ_pairs[j]), c))
         triplets = [t for t in triplets if len(t) == 3]
+        # assign variants to each triplet
         for triplet in triplets:
             triplet_central_domains = [chains[chain][0][2]
             for chain in triplet]
-            # ok
+            
             allocated_numbers = [-1] * 3
             for i in range(3):
                 t = triplet_central_domains[i]
@@ -353,7 +459,7 @@ def allocate_central_domains(chains, members, species):
             new_domains = suitable_domains([a for a in allocated_numbers
                                             if a != -1])
             if len(new_domains):
-                # not all three 
+                # not all three have been assigned a domain
                 if any([a == -1 for a in allocated_numbers]):
                     # something's empty, fill in with new domains
                     for d in new_domains:
@@ -367,7 +473,7 @@ def allocate_central_domains(chains, members, species):
                 allocated_numbers[1] != -1:
                     allocated_numbers[1] = new_domains[0]
         
-            # then set the chains accordingly
+            # then set the variants accordingly
             for i in range(3):
                 for strand in chains[triplet[i]]:
                     if '*' in strand[2]:
@@ -375,43 +481,18 @@ def allocate_central_domains(chains, members, species):
                     else:
                         strand[2] = 'c' + str(allocated_numbers[i])
                         
-            # if there's something left untouched, set it to c2
-            #for s in species:
-            #    if s.state_strand[2] == 'c':
-            #        s.state_strand[2] = 'c2'
-            #    if s.state_strand[2] == 'c*':
-            #        s.state_strand[2] = 'c2*'
-            #    if s.active_state_strand[]
                         
 def make_domains(A, g, names, central_mismatch=False):
+    # put everything together
     species = create_species(A, names)
     enumerate_domains(species, g)
+       
     if central_mismatch:
+        # assign central domain variants
         chains, members = make_chains(species)
         allocate_central_domains(chains, members, species)
 
     return species
-    
-if __name__ == '__main__':      
-    A = np.array([[0, 1, 0, 0],
-                  [0, 0, 1, 0],
-                  [0, 0, 0, 1],
-                  [0, 0, 0, 0]])
- 
-    names = ['K', 'X', 'Y', 'Z']
-    species = create_species(A, names)
-    g = igraph.Graph.Adjacency((A != 0).tolist())
-    g.es['weight'] = A[A.nonzero()]   
-    enumerate_domains(species, g)   
-    chains, members = make_chains(species)
-    allocate_central_domains(chains, members, species)
-
-    for s in species:
-        print('Species: ', s.name)
-        print('State: ', s.state_strand)
-        print('ID: ', s.id_strand[::-1])
-        print('Active: ', s.active_state_strand)
-        print('')
 
     
     

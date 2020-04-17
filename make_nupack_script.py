@@ -7,7 +7,15 @@ Created on Wed Feb 19 18:14:05 2020
 """
 from time import localtime
 def design_script(species_list, central_mismatch, stop):
-    # no mismatches here yet
+    """
+    write a NUPACK script that computes optimal sequences for an ACDC system
+    args:
+        species_list - list
+        central_mismatch - bool
+        stop - float, normalised defect objective for NUPACK
+    """
+    
+    # make file
     f = open('design.np', 'w')
     lt = localtime()
     f.write('# Created %d.%d.%d %d.%d.%d #\n' % (lt[2], lt[1], lt[0],
@@ -15,6 +23,8 @@ def design_script(species_list, central_mismatch, stop):
     f.write('material = dna\n')
     f.write('temperature[C] = 25.0\n')
     f.write('trials = 10\n')
+    
+    # complex structures
     if central_mismatch:
         species_format1 = '.' * 6 + '(' * 9 + '.' + '(' * 22 + '.' * 5 + \
         '+' + '.' * 5 + ')' * 22 + '.' + ')' * 9 + '.' * 6
@@ -49,31 +59,31 @@ def design_script(species_list, central_mismatch, stop):
         waste_format = \
         '.' * 10 + '(' * 25 + '+' + ')' * 25 + '.' * 10
         
-            
+    # write domains        
     f.write('\n# domains #\n\n')
+    # remove '*' from each domain name
     domains = [d if not '*' in d else d[:-1] for s in species_list 
                for d in s.state_strand + s.id_strand + s.active_state_strand]
     domains = list(set(domains))
     domains.sort()
     for d in domains:
+
         if d == 'c':
             if central_mismatch:
                 f.write('domain c = N5CN5CN5CN5\n')
-                #f.write('domain c = N23\n')
             else:
                 f.write('domain c = N15\n')
         elif d == 'c2':
             f.write('domain c2 = N5GN5CN5CN5\n')
-            #f.write('domain c2 = N23\n')
         elif d == 'c3':
             f.write('domain c3 = N5CN5GN5CN5\n')
-            #f.write('domain c3 = N23\n')
         elif d == 'c4':
             f.write('domain c4 = N5CN5CN5GN5\n')
-            #f.write('domain c4 = N23\n')
         else:
-            # force toehold mismatch
             if '2' in d and d[:-1] in domains:
+                # force toehold mismatch between d and d2
+                # figure out what the structure needs to be to always
+                # implement a C-C mismatch
                 for s in species_list:
                     if d[:-1] in s.active_state_strand[0]:
                         if s.active_state_strand[0] == d[:-1]:
@@ -128,19 +138,8 @@ def design_script(species_list, central_mismatch, stop):
             elif not d + '2' in domains: # avoid duplicates
                 f.write('domain %s = N5\n' % d)
                
-               
-                 
-               
-                
-                       
-                 
-            #   f.write('similarity ' + d[0] + '3 = N5\n')
-             #  f.write(d[0] + '.similarity[frac] '+ d[0] +
-               #        '3 = [0.80, 0.80]\n')
-              # f.write(d + '.similarity[frac] ' + d[0] +
-                #       '3 = [1.00, 1.00]\n')
 
-    
+    # write strand structures as sets of domains
     f.write('\n# strands # \n\n')
     strand_counter = 1
     for s in species_list:
@@ -159,15 +158,7 @@ def design_script(species_list, central_mismatch, stop):
         s.active_state_strand_name = 'std' + str(strand_counter)
         strand_counter += 1
         
-        
-        #active_strand_string = 's' + str(strand_counter - 1) + ' s' + \
-        #str(strand_counter - 2)
-        #if len(s.activate_u + s.repress_u):
-        #    strand_string = 'std' + str(strand_counter - 3) + \
-        #    ' std' + str(strand_counter - 2)
-        #    strand_strings.append(strand_string)
-        #strand_strings.append(active_strand_string) + str(strand_counter)
-            
+    # write complex structures as sets of strands
     f.write('\n# complexes #\n\n')
 
     for s in species_list:
@@ -204,6 +195,7 @@ def design_script(species_list, central_mismatch, stop):
                     downstream_species.state_strand_name + ' ' +
                     s.active_state_strand_name + '\n')
     
+    # write complex structures as base pairs and unbound bases
     f.write('\n# structures of complexes #\n\n')
     # species
     for s in species_list:
@@ -335,7 +327,6 @@ def design_script(species_list, central_mismatch, stop):
                     ('WASTE_' + s.name + downstream_species.name + 'act' +
                      downstream_species.name,
                      waste_format))
-            
             
     f.write('\n# prevent sequence patterns #\n\n')
     f.write('prevent = AAAA, CCCC, GGGG, UUUU, MMMMMMM, KKKKKK, ' +
