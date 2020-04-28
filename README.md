@@ -1,1 +1,1 @@
-# push-pull-compiler
+# Compiler for ACDC networks
