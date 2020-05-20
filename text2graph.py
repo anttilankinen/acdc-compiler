@@ -22,15 +22,16 @@ def text2graph(filename):
     # filter newlines out
     f = [line[:-1] if '\n' in line else line for line in f]
     # number of species in the network
-    names = list(set([line[i] for line in f for i in (-1, 0)]))
+    names = list(set([line.split()[i] for line in f for i in (0, -1)]))
+    #names = list(set([line[i] for line in f for i in (-1, 0)]))
     names.sort()
     # create the adjacency matrix
     A = np.zeros([len(names), len(names)])
     for i, line in enumerate(f):
         if '->' in line: # activation reaction, edge weight 1
-            A[names.index(line[0]), names.index(line[-1])] = 1
+            A[names.index(line.split()[0]), names.index(line.split()[-1])] = 1
         elif '-|' in line: # repression reaction, edge weight -1
-            A[names.index(line[0]), names.index(line[-1])] = -1
+            A[names.index(line.split()[0]), names.index(line.split()[-1])] = -1
         else:
             raise ValueError('No relation symbol found on line %d of %s' %
                              (i, filename))

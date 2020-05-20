@@ -6,7 +6,7 @@ Created on Wed Jan 29 10:16:36 2020
 
 @author: antti
 """
-
+import numpy as np
 
 def find_all_paths(graph, start, end, mode = 'OUT'):
     """
@@ -48,6 +48,8 @@ def is_valid(A, g):
         bool, validity of the graph
         None / str, potential error message
     """
+    if np.sum(np.abs(A.diagonal())) > 0:
+        return False, 'Self-connections are not allowed.'
     for i in range(g.vcount()-1):
         for j in range(i+1, g.vcount()):
             paths_out = find_all_paths(g, i, j, mode='OUT')
