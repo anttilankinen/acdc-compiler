@@ -14,5 +14,6 @@ Example usage: `python compiler.py -i testgraph.txt -n -d 3`
 Each line in a valid input file contains three symbols from left to right, separated by whitespace:
 - The name of some species, say `A`
 - An edge symbol, either `->` or `-|`
-- The name of another species, say `B`
+- The name of another species, say `B`  
+
 Currently only connected networks are supported.
