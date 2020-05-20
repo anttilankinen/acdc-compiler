@@ -6,12 +6,11 @@ Created on Wed Feb 19 18:14:05 2020
 @author: antti
 """
 from time import localtime
-def design_script(species_list, central_mismatch, stop):
+def design_script(species_list, stop):
     """
     write a NUPACK script that computes optimal sequences for an ACDC system
     args:
         species_list - list
-        central_mismatch - bool
         stop - float, normalised defect objective for NUPACK
     """
     
@@ -25,39 +24,29 @@ def design_script(species_list, central_mismatch, stop):
     f.write('trials = 10\n')
     
     # complex structures
-    if central_mismatch:
-        species_format1 = '.' * 6 + '(' * 9 + '.' + '(' * 22 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 22 + '.' + ')' * 9 + '.' * 6
-        species_format2 = '.' * 6 + '(' * 15 + '.' + '(' * 16 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 16 + '.' + ')' * 15 + '.' * 6
-        species_format3 = '.' * 6 + '(' * 21 + '.' + '(' * 10 + '.' * 5 + \
-        '+' + '.' * 5 + ')' * 10 + '.' + ')' * 21 + '.' * 6
-        # 1,2
-        fuel_format1 = '.' * 10 + '(' * 5 + '.' + '(' * 5 + '.' + \
-        '(' *  16 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 16 + \
-        '.' + ')' * 5 + '.' + ')' * 5 + '.' * 10
-        # 1,3
-        fuel_format2 = '.' * 10 + '(' * 5 + '.' + '(' * 11 + '.' + \
-        '(' *  10 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 10 + \
-        '.' + ')' * 11 + '.' + ')' * 5 + '.' * 10
-        # 2,3
-        fuel_format3 = '.' * 10 + '(' * 11 + '.' + '(' * 5 + '.' + \
-        '(' *  10 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 10 + \
-        '.' + ')' * 5 + '.' + ')' * 11 + '.' * 10
-        intermediate_product_format = '.' * 10 + '(' * 27 + '.' + \
-        '(' * 5 + '+' + ')' * 5 + '.' +')' * 27 + '.' * 10
-        waste_format = \
-        '.' * 10 + '(' * 33 + '+' + ')' * 33 + '.' * 10
-    else:
-        species_format = '.' * 6 + '(' * 24 + '.' * 5 + '+' +\
-        '.' * 5 + ')' * 24 + '.' * 6
-        fuel_format = '.' * 10 + '(' * 20 + '.' + '(' * 4 + '+' +\
-        ')' * 4 + '.' + ')' * 20 + '.' * 10
-        intermediate_product_format = \
-        '.' * 10 + '(' * 19 + '.' + '(' * 5 + '+' + \
-        ')' * 5 + '.' + ')' * 19 + '.' * 10
-        waste_format = \
-        '.' * 10 + '(' * 25 + '+' + ')' * 25 + '.' * 10
+    
+    species_format1 = '.' * 6 + '(' * 9 + '.' + '(' * 22 + '.' * 5 + \
+    '+' + '.' * 5 + ')' * 22 + '.' + ')' * 9 + '.' * 6
+    species_format2 = '.' * 6 + '(' * 15 + '.' + '(' * 16 + '.' * 5 + \
+    '+' + '.' * 5 + ')' * 16 + '.' + ')' * 15 + '.' * 6
+    species_format3 = '.' * 6 + '(' * 21 + '.' + '(' * 10 + '.' * 5 + \
+    '+' + '.' * 5 + ')' * 10 + '.' + ')' * 21 + '.' * 6
+    # 1,2
+    fuel_format1 = '.' * 10 + '(' * 5 + '.' + '(' * 5 + '.' + \
+    '(' *  16 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 16 + \
+    '.' + ')' * 5 + '.' + ')' * 5 + '.' * 10
+    # 1,3
+    fuel_format2 = '.' * 10 + '(' * 5 + '.' + '(' * 11 + '.' + \
+    '(' *  10 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 10 + \
+    '.' + ')' * 11 + '.' + ')' * 5 + '.' * 10
+    # 2,3
+    fuel_format3 = '.' * 10 + '(' * 11 + '.' + '(' * 5 + '.' + \
+    '(' *  10 + '.' + '(' * 4 + '+' + ')' * 4 + '.' + ')' * 10 + \
+    '.' + ')' * 5 + '.' + ')' * 11 + '.' * 10
+    intermediate_product_format = '.' * 10 + '(' * 27 + '.' + \
+    '(' * 5 + '+' + ')' * 5 + '.' +')' * 27 + '.' * 10
+    waste_format = \
+    '.' * 10 + '(' * 33 + '+' + ')' * 33 + '.' * 10
         
     # write domains        
     f.write('\n# domains #\n\n')
@@ -69,10 +58,7 @@ def design_script(species_list, central_mismatch, stop):
     for d in domains:
 
         if d == 'c':
-            if central_mismatch:
-                f.write('domain c = N5CN5CN5CN5\n')
-            else:
-                f.write('domain c = N15\n')
+            f.write('domain c = N5CN5CN5CN5\n')
         elif d == 'c2':
             f.write('domain c2 = N5GN5CN5CN5\n')
         elif d == 'c3':
@@ -200,45 +186,37 @@ def design_script(species_list, central_mismatch, stop):
     # species
     for s in species_list:
         if len(s.activate_u + s.repress_u):
-            if central_mismatch:
-                if s.state_strand[2] in ['c2', 'c4*']: 
-                    f.write('%s.structure = %s\n' % (s.name, species_format1))
-                elif s.state_strand[2] in ['c3', 'c3*']:
-                    f.write('%s.structure = %s\n' % (s.name, species_format2))
-                elif s.state_strand[2] in ['c4', 'c2*']:
-                    f.write('%s.structure = %s\n' % (s.name, species_format3))
-                else:
-                    raise ValueError('Incorrect central domain')
-                if s.active_state_strand[2] in ['c2', 'c4*']: 
-                    f.write('%s.structure = %s\n' %
-                            (s.name + 'act', species_format1))
-                elif s.active_state_strand[2] in ['c3', 'c3*']:
-                    f.write('%s.structure = %s\n' %
-                            (s.name + 'act', species_format2))
-                elif s.active_state_strand[2] in ['c4', 'c2*']:
-                    f.write('%s.structure = %s\n' %
-                            (s.name + 'act', species_format3))
-                else:
-                    raise ValueError('Incorrect central domain')
+            if s.state_strand[2] in ['c2', 'c4*']: 
+                f.write('%s.structure = %s\n' % (s.name, species_format1))
+            elif s.state_strand[2] in ['c3', 'c3*']:
+                f.write('%s.structure = %s\n' % (s.name, species_format2))
+            elif s.state_strand[2] in ['c4', 'c2*']:
+                f.write('%s.structure = %s\n' % (s.name, species_format3))
             else:
-                f.write('%s.structure = %s\n' % (s.name, species_format))
-                f.write('%s.structure = %s\n' % (s.name + 'act',
-                                                 species_format))
+                raise ValueError('Incorrect central domain')
+            if s.active_state_strand[2] in ['c2', 'c4*']: 
+                f.write('%s.structure = %s\n' %
+                        (s.name + 'act', species_format1))
+            elif s.active_state_strand[2] in ['c3', 'c3*']:
+                f.write('%s.structure = %s\n' %
+                        (s.name + 'act', species_format2))
+            elif s.active_state_strand[2] in ['c4', 'c2*']:
+                f.write('%s.structure = %s\n' %
+                        (s.name + 'act', species_format3))
+            else:
+                raise ValueError('Incorrect central domain')
         else:
-            if central_mismatch:
-                if s.active_state_strand[2] in ['c2', 'c4*']: 
-                    f.write('%s.structure = %s\n' %
-                            (s.name, species_format1))
-                elif s.active_state_strand[2] in ['c3', 'c3*']:
-                    f.write('%s.structure = %s\n' %
-                            (s.name, species_format2))
-                elif s.active_state_strand[2] in ['c4', 'c2*']:
-                    f.write('%s.structure = %s\n' %
-                            (s.name, species_format3))
-                else:
-                    raise ValueError('Incorrect central domain')
+            if s.active_state_strand[2] in ['c2', 'c4*']: 
+                f.write('%s.structure = %s\n' %
+                        (s.name, species_format1))
+            elif s.active_state_strand[2] in ['c3', 'c3*']:
+                f.write('%s.structure = %s\n' %
+                        (s.name, species_format2))
+            elif s.active_state_strand[2] in ['c4', 'c2*']:
+                f.write('%s.structure = %s\n' %
+                        (s.name, species_format3))
             else:
-                f.write('structure %s = %s\n' % (s.name, species_format))
+                raise ValueError('Incorrect central domain')
     # fuels, intermediates, wastes  
     for s in species_list:
         for downstream_species in s.activate_d:
@@ -247,40 +225,36 @@ def design_script(species_list, central_mismatch, stop):
                      intermediate_product_format))
             
             # catalyst state strand is on the bottom
-            if central_mismatch:
-                if downstream_species.active_state_strand[2] == 'c2' \
-                and s.active_state_strand[2] == 'c3*' \
-                or downstream_species.active_state_strand[2] == 'c3' \
-                and s.active_state_strand[2] == 'c2*'\
-                or downstream_species.active_state_strand[2] == 'c3*' \
-                and s.active_state_strand[2] == 'c4' \
-                or downstream_species.active_state_strand[2] == 'c4*' \
-                and s.active_state_strand[2] == 'c3':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name * 2 +
-                         'act', fuel_format1))
-                elif downstream_species.active_state_strand[2][0:2] == 'c4' \
-                and s.active_state_strand[2][0:2] == 'c2' \
-                or downstream_species.active_state_strand[2][0:2] == 'c2' \
-                and s.active_state_strand[2][0:2] == 'c4':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name * 2 +
-                         'act', fuel_format2))
-                elif downstream_species.active_state_strand[2] == 'c3*' \
-                and s.active_state_strand[2] == 'c2' \
-                or downstream_species.active_state_strand[2] == 'c2*' \
-                and s.active_state_strand[2] == 'c3'\
-                or downstream_species.active_state_strand[2] == 'c3' \
-                and s.active_state_strand[2] == 'c4*' \
-                or downstream_species.active_state_strand[2] == 'c4' \
-                and s.active_state_strand[2] == 'c3*':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name * 2 +
-                         'act', fuel_format3))
-            else:
+            if downstream_species.active_state_strand[2] == 'c2' \
+            and s.active_state_strand[2] == 'c3*' \
+            or downstream_species.active_state_strand[2] == 'c3' \
+            and s.active_state_strand[2] == 'c2*'\
+            or downstream_species.active_state_strand[2] == 'c3*' \
+            and s.active_state_strand[2] == 'c4' \
+            or downstream_species.active_state_strand[2] == 'c4*' \
+            and s.active_state_strand[2] == 'c3':
                 f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name * 2 +
-                         'act', fuel_format))
+                    ('FUEL_' + s.name + downstream_species.name * 2 +
+                     'act', fuel_format1))
+            elif downstream_species.active_state_strand[2][0:2] == 'c4' \
+            and s.active_state_strand[2][0:2] == 'c2' \
+            or downstream_species.active_state_strand[2][0:2] == 'c2' \
+            and s.active_state_strand[2][0:2] == 'c4':
+                f.write('%s.structure = %s\n' %
+                    ('FUEL_' + s.name + downstream_species.name * 2 +
+                     'act', fuel_format2))
+            elif downstream_species.active_state_strand[2] == 'c3*' \
+            and s.active_state_strand[2] == 'c2' \
+            or downstream_species.active_state_strand[2] == 'c2*' \
+            and s.active_state_strand[2] == 'c3'\
+            or downstream_species.active_state_strand[2] == 'c3' \
+            and s.active_state_strand[2] == 'c4*' \
+            or downstream_species.active_state_strand[2] == 'c4' \
+            and s.active_state_strand[2] == 'c3*':
+                f.write('%s.structure = %s\n' %
+                    ('FUEL_' + s.name + downstream_species.name * 2 +
+                     'act', fuel_format3))
+
             f.write('%s.structure = %s\n' %
                     ('WASTE_' + s.name + downstream_species.name * 2 +
                      'act',
@@ -289,40 +263,35 @@ def design_script(species_list, central_mismatch, stop):
             f.write('%s.structure = %s\n' %
                     (s.name + downstream_species.name,
                      intermediate_product_format))
-            if central_mismatch:
-                if downstream_species.state_strand[2] == 'c2' \
-                and s.active_state_strand[2] == 'c3*' \
-                or downstream_species.state_strand[2] == 'c3' \
-                and s.active_state_strand[2] == 'c2*'\
-                or downstream_species.state_strand[2] == 'c3*' \
-                and s.active_state_strand[2] == 'c4' \
-                or downstream_species.state_strand[2] == 'c4*' \
-                and s.active_state_strand[2] == 'c3':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name + 'act' +
-                         downstream_species.name, fuel_format1))
-                elif downstream_species.state_strand[2][0:2] == 'c4' \
-                and s.active_state_strand[2][0:2] == 'c2' \
-                or downstream_species.state_strand[2][0:2] == 'c2' \
-                and s.active_state_strand[2][0:2] == 'c4':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name + 'act' +
-                         downstream_species.name, fuel_format2))
-                elif downstream_species.state_strand[2] == 'c3*' \
-                and s.active_state_strand[2] == 'c2' \
-                or downstream_species.state_strand[2] == 'c2*' \
-                and s.active_state_strand[2] == 'c3'\
-                or downstream_species.state_strand[2] == 'c3' \
-                and s.active_state_strand[2] == 'c4*' \
-                or downstream_species.state_strand[2] == 'c4' \
-                and s.active_state_strand[2] == 'c3*':
-                    f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name + 'act' +
-                         downstream_species.name, fuel_format3))
-            else:
+            if downstream_species.state_strand[2] == 'c2' \
+            and s.active_state_strand[2] == 'c3*' \
+            or downstream_species.state_strand[2] == 'c3' \
+            and s.active_state_strand[2] == 'c2*'\
+            or downstream_species.state_strand[2] == 'c3*' \
+            and s.active_state_strand[2] == 'c4' \
+            or downstream_species.state_strand[2] == 'c4*' \
+            and s.active_state_strand[2] == 'c3':
                 f.write('%s.structure = %s\n' %
-                        ('FUEL_' + s.name + downstream_species.name + 'act' +
-                         downstream_species.name, fuel_format))
+                    ('FUEL_' + s.name + downstream_species.name + 'act' +
+                     downstream_species.name, fuel_format1))
+            elif downstream_species.state_strand[2][0:2] == 'c4' \
+            and s.active_state_strand[2][0:2] == 'c2' \
+            or downstream_species.state_strand[2][0:2] == 'c2' \
+            and s.active_state_strand[2][0:2] == 'c4':
+                f.write('%s.structure = %s\n' %
+                    ('FUEL_' + s.name + downstream_species.name + 'act' +
+                     downstream_species.name, fuel_format2))
+            elif downstream_species.state_strand[2] == 'c3*' \
+            and s.active_state_strand[2] == 'c2' \
+            or downstream_species.state_strand[2] == 'c2*' \
+            and s.active_state_strand[2] == 'c3'\
+            or downstream_species.state_strand[2] == 'c3' \
+            and s.active_state_strand[2] == 'c4*' \
+            or downstream_species.state_strand[2] == 'c4' \
+            and s.active_state_strand[2] == 'c3*':
+                f.write('%s.structure = %s\n' %
+                    ('FUEL_' + s.name + downstream_species.name + 'act' +
+                     downstream_species.name, fuel_format3))
             f.write('%s.structure = %s\n' %
                     ('WASTE_' + s.name + downstream_species.name + 'act' +
                      downstream_species.name,

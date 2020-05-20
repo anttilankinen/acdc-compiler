@@ -482,15 +482,14 @@ def allocate_central_domains(chains, members, species):
                         strand[2] = 'c' + str(allocated_numbers[i])
                         
                         
-def make_domains(A, g, names, central_mismatch=False):
+def make_domains(A, g, names):
     # put everything together
     species = create_species(A, names)
     enumerate_domains(species, g)
-       
-    if central_mismatch:
-        # assign central domain variants
-        chains, members = make_chains(species)
-        allocate_central_domains(chains, members, species)
+
+    # assign central domain variants
+    chains, members = make_chains(species)
+    allocate_central_domains(chains, members, species)
 
     return species
 

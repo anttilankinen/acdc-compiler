@@ -16,8 +16,6 @@ def get_args():
                         help='Name of output file')
     parser.add_argument('-n', '--nupack', action='store_true',
                         help='Option to run NUPACK')
-    parser.add_argument('-c', '--central', action='store_true',
-                        help='Option to include central domain mismatches')
     parser.add_argument('-d', '--defect', type=int, default=5,
                         help='Normalised defect stopping criterion for NUPACK')
     return parser.parse_args()
@@ -27,22 +25,21 @@ args = get_args()
 print('ACDC Compiler')
 print('Input file:', args.input)
 print('Target defect (%):', args.defect)
-print('Central domain mismatches:', args.central)
 print('Run NUPACK:', args.nupack)
 
 print('Checking if graph is a valid ACDC graph...', end='', flush=True)
 A, g, names = text2graph(args.input) # adjacency matrix, graph, names of nodes
-result, error = is_valid(g)
+result, error = is_valid(A, g)
 
 if result: # graph is valid
     print(' Done')
     
     print('Enumerating domains...', end='', flush=True)
-    species = make_domains(A, g, names, central_mismatch=args.central)
+    species = make_domains(A, g, names)
     print(' Done')
     
     print('Creating NUPACK script...', end='', flush=True)
-    design_script(species, central_mismatch=args.central, stop=args.defect)
+    design_script(species, stop=args.defect)
     print(' Done')
     
     if args.nupack:
@@ -73,7 +70,7 @@ if result: # graph is valid
             
             
 else:
-    print('Error: %s. Aborting' % error) 
+    print('Error: %s Aborting' % error) 
     
 
 

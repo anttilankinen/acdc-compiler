@@ -39,7 +39,7 @@ def find_all_paths(graph, start, end, mode = 'OUT'):
             all_paths.extend(find_all_paths_aux(adjlist, s, e, []))
     return all_paths
 
-def is_valid(g):
+def is_valid(A, g):
     """
     check if a graph is a valid ACDC network
     args:
@@ -52,6 +52,12 @@ def is_valid(g):
         for j in range(i+1, g.vcount()):
             paths_out = find_all_paths(g, i, j, mode='OUT')
             paths_in = find_all_paths(g, i, j, mode='IN')
+            for path in paths_out + paths_in:
+                edges = [(p, p+1) for p in path[:-1]]
+                for e in edges[1:-1]:
+                    if A[e[0], e[1]] == -1:
+                        return False, 'Deactivation reaction in the middle '+ \
+                    'of a cascade.'
             if len(paths_out) > 0:
                 # some paths exists this way
                 lengths_out = [len(k)-1 for k in paths_out]
