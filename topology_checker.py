@@ -54,8 +54,10 @@ def is_valid(A, g):
         for j in range(i+1, g.vcount()):
             paths_out = find_all_paths(g, i, j, mode='OUT')
             paths_in = find_all_paths(g, i, j, mode='IN')
-            for path in paths_out + paths_in:
-                edges = [(p, p+1) for p in path[:-1]]
+            paths = [p for p in paths_out if len(p) >= 4] + \
+            [p for p in paths_in if len(p) >= 4]
+            for path in paths:
+                edges = [(path[k], path[k+1]) for k in range(len(path[:-1]))]
                 for e in edges[1:-1]:
                     if A[e[0], e[1]] == -1:
                         return False, 'Deactivation reaction in the middle '+ \
@@ -91,6 +93,7 @@ def is_valid(A, g):
                     return False, 'Short cycle in network.'
             
     return True, None
+
             
             
         

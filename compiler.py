@@ -20,7 +20,8 @@ def get_args():
                         help='Normalised defect stopping criterion for NUPACK')
     return parser.parse_args()
 
-
+central_mismatch = False # mismatch method currently in testing, not included
+# in paper so set to false
 args = get_args()
 print('ACDC Compiler')
 print('Input file:', args.input)
@@ -35,11 +36,11 @@ if result: # graph is valid
     print(' Done')
     
     print('Enumerating domains...', end='', flush=True)
-    species = make_domains(A, g, names)
+    species = make_domains(A, g, names, central_mismatch)
     print(' Done')
     
     print('Creating NUPACK script...', end='', flush=True)
-    design_script(species, stop=args.defect)
+    design_script(species, central_mismatch, stop=args.defect)
     print(' Done')
     
     if args.nupack:
