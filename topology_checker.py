@@ -39,7 +39,7 @@ def find_all_paths(graph, start, end, mode = 'OUT'):
             all_paths.extend(find_all_paths_aux(adjlist, s, e, []))
     return all_paths
 
-def is_valid(A, g):
+def is_valid(A, g, g_undirected):
     """
     check if a graph is a valid ACDC network
     args:
@@ -91,6 +91,13 @@ def is_valid(A, g):
                     return False, 'Odd cycle in network.'
                 elif any(k < 6 for k in loop_lengths):
                     return False, 'Short cycle in network.'
+            undirected_paths = find_all_paths(g_undirected, i, j, mode='OUT')
+            if len(undirected_paths) > 0:
+                # directionless loop exists
+                path_lengths = [len(k)-1 for k in undirected_paths]
+                loop_lengths = [k + l for k in path_lengths for l in path_lengths]
+                if any(k % 2 for k in loop_lengths):
+                    return False, 'Odd cycle in network.'
             
     return True, None
 

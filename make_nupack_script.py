@@ -6,7 +6,7 @@ Created on Wed Feb 19 18:14:05 2020
 @author: antti
 """
 from time import localtime
-def design_script(species_list, central_mismatch, stop):
+def design_script(species_list, central_domain_length, central_mismatch, stop):
     """
     write a NUPACK script that computes optimal sequences for an ACDC system
     args:
@@ -26,6 +26,7 @@ def design_script(species_list, central_mismatch, stop):
     
     # complex structures
     if central_mismatch:
+        #experimental
         species_format1 = '.' * 6 + '(' * 9 + '.' + '(' * 22 + '.' * 5 + \
         '+' + '.' * 5 + ')' * 22 + '.' + ')' * 9 + '.' * 6
         species_format2 = '.' * 6 + '(' * 15 + '.' + '(' * 16 + '.' * 5 + \
@@ -49,15 +50,15 @@ def design_script(species_list, central_mismatch, stop):
         waste_format = \
         '.' * 10 + '(' * 33 + '+' + ')' * 33 + '.' * 10
     else:
-        species_format = '.' * 6 + '(' * 32 + '.' * 5 + '+' +\
-        '.' * 5 + ')' * 32 + '.' * 6
-        fuel_format = '.' * 10 + '(' * 28 + '.' + '(' * 4 + '+' +\
-        ')' * 4 + '.' + ')' * 28 + '.' * 10
+        species_format = '.' * 6 + '(' * (central_domain_length + 9) + '.' * 5 + '+' +\
+        '.' * 5 + ')' * (central_domain_length + 9) + '.' * 6
+        fuel_format = '.' * 10 + '(' * (central_domain_length + 5) + '.' + '(' * 4 + '+' +\
+        ')' * 4 + '.' + ')' * (central_domain_length + 5) + '.' * 10
         intermediate_product_format = \
-        '.' * 10 + '(' * 27 + '.' + '(' * 5 + '+' + \
-        ')' * 5 + '.' + ')' * 27 + '.' * 10
+        '.' * 10 + '(' * (central_domain_length + 4) + '.' + '(' * 5 + '+' + \
+        ')' * 5 + '.' + ')' * (central_domain_length + 4) + '.' * 10
         waste_format = \
-        '.' * 10 + '(' * 33 + '+' + ')' * 33 + '.' * 10
+        '.' * 10 + '(' * (central_domain_length + 10) + '+' + ')' * (central_domain_length + 10) + '.' * 10
         
     # write domains        
     f.write('\n# domains #\n\n')
@@ -72,7 +73,7 @@ def design_script(species_list, central_mismatch, stop):
             if central_mismatch:
                 f.write('domain c = N5CN5CN5CN5\n')
             else:
-                f.write('domain c = N23\n')
+                f.write('domain c = N' + str(central_domain_length) + '\n')
         elif d == 'c2':
             f.write('domain c2 = N5GN5CN5CN5\n')
         elif d == 'c3':

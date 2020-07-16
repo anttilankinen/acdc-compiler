@@ -37,7 +37,8 @@ def text2graph(filename):
                              (i, filename))
     # create graph
     g = igraph.Graph.Adjacency((A != 0).tolist())
+    g_undirected = igraph.Graph.Adjacency((np.abs(A) + np.abs(A.transpose()) != 0).tolist())
     g.es['weight'] = A[A.nonzero()]   
-    return A, g, names
+    return A, g, g_undirected, names
     
     

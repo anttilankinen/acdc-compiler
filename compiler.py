@@ -18,6 +18,7 @@ def get_args():
                         help='Option to run NUPACK')
     parser.add_argument('-d', '--defect', type=int, default=5,
                         help='Normalised defect stopping criterion for NUPACK')
+    parser.add_argument('-l', '--length', type=int, default=17, help='Length of central domain')
     return parser.parse_args()
 
 central_mismatch = False # mismatch method currently in testing, not included
@@ -29,8 +30,8 @@ print('Target defect (%):', args.defect)
 print('Run NUPACK:', args.nupack)
 
 print('Checking if graph is a valid ACDC graph...', end='', flush=True)
-A, g, names = text2graph(args.input) # adjacency matrix, graph, names of nodes
-result, error = is_valid(A, g)
+A, g, g_undirected, names = text2graph(args.input) # adjacency matrix, graph, undirected graph, names of nodes
+result, error = is_valid(A, g, g_undirected)
 
 if result: # graph is valid
     print(' Done')
@@ -40,7 +41,7 @@ if result: # graph is valid
     print(' Done')
     
     print('Creating NUPACK script...', end='', flush=True)
-    design_script(species, central_mismatch, stop=args.defect)
+    design_script(species, args.length, central_mismatch, stop=args.defect)
     print(' Done')
     
     if args.nupack:
