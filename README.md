@@ -2,7 +2,7 @@
 Example usage: `python compiler.py -i testgraph.txt -n -d 3 -l 15`  
 `-i testgraph.txt`: use `testgraph.txt` as input file  
 `-n`: run NUPACK locally  
-`-d 3`: set NUPACK normalised defect stoppping criterion to 3% (default 5%)
+`-d 3`: set NUPACK normalised defect stoppping criterion to 3% (default 5%)  
 `-l 15`: set central domain length to 15 (default 17)
 
 ## Dependencies
